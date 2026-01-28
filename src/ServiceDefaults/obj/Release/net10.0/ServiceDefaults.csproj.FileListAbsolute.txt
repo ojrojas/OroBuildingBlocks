@@ -1,0 +1,12 @@
+/home/orojasga/Sources/OroBuildingBlocks/src/ServiceDefaults/bin/Release/net10.0/ServiceDefaults.deps.json
+/home/orojasga/Sources/OroBuildingBlocks/src/ServiceDefaults/bin/Release/net10.0/ServiceDefaults.dll
+/home/orojasga/Sources/OroBuildingBlocks/src/ServiceDefaults/bin/Release/net10.0/ServiceDefaults.pdb
+/home/orojasga/Sources/OroBuildingBlocks/src/ServiceDefaults/obj/Release/net10.0/ServiceDefaults.csproj.AssemblyReference.cache
+/home/orojasga/Sources/OroBuildingBlocks/src/ServiceDefaults/obj/Release/net10.0/ServiceDefaults.GeneratedMSBuildEditorConfig.editorconfig
+/home/orojasga/Sources/OroBuildingBlocks/src/ServiceDefaults/obj/Release/net10.0/ServiceDefaults.AssemblyInfoInputs.cache
+/home/orojasga/Sources/OroBuildingBlocks/src/ServiceDefaults/obj/Release/net10.0/ServiceDefaults.AssemblyInfo.cs
+/home/orojasga/Sources/OroBuildingBlocks/src/ServiceDefaults/obj/Release/net10.0/ServiceDefaults.csproj.CoreCompileInputs.cache
+/home/orojasga/Sources/OroBuildingBlocks/src/ServiceDefaults/obj/Release/net10.0/ServiceDefaults.dll
+/home/orojasga/Sources/OroBuildingBlocks/src/ServiceDefaults/obj/Release/net10.0/refint/ServiceDefaults.dll
+/home/orojasga/Sources/OroBuildingBlocks/src/ServiceDefaults/obj/Release/net10.0/ServiceDefaults.pdb
+/home/orojasga/Sources/OroBuildingBlocks/src/ServiceDefaults/obj/Release/net10.0/ref/ServiceDefaults.dll
