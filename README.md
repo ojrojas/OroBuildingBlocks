@@ -22,7 +22,7 @@ The `EventBus` and `EventBusRabbitMQ` projects provide a robust infrastructure f
 - **Resilience**: Integrated retry logic using Polly Resilience Pipelines to handle transient broker connection issues.
 - **Observability**: Native OpenTelemetry integration for distributed tracing, including automatic context propagation across producers and consumers.
 
-### �📝 Logging
+### 📝 Logging
 The `Loggers` project provides utilities for structured logging:
 - **Serilog Integration**: Easy setup of Serilog with Console and [Seq](https://datalust.co/seq) sinks.
 - **Enrichment**: Automatic enrichment with application-specific properties and log context.
