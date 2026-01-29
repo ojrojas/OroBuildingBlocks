@@ -6,6 +6,7 @@
 /home/orojasga/Sources/OroBuildingBlocks/src/Loggers/obj/Debug/net10.0/Loggers.AssemblyInfoInputs.cache
 /home/orojasga/Sources/OroBuildingBlocks/src/Loggers/obj/Debug/net10.0/Loggers.AssemblyInfo.cs
 /home/orojasga/Sources/OroBuildingBlocks/src/Loggers/obj/Debug/net10.0/Loggers.csproj.CoreCompileInputs.cache
+/home/orojasga/Sources/OroBuildingBlocks/src/Loggers/obj/Debug/net10.0/Loggers.sourcelink.json
 /home/orojasga/Sources/OroBuildingBlocks/src/Loggers/obj/Debug/net10.0/Loggers.dll
 /home/orojasga/Sources/OroBuildingBlocks/src/Loggers/obj/Debug/net10.0/refint/Loggers.dll
 /home/orojasga/Sources/OroBuildingBlocks/src/Loggers/obj/Debug/net10.0/Loggers.pdb

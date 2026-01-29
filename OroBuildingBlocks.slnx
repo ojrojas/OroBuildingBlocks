@@ -1,5 +1,7 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/EventBus/EventBus.csproj" />
+    <Project Path="src/EventBusRabbitMQ/EventBusRabbitMQ.csproj" />
     <Project Path="src/Loggers/Loggers.csproj" />
     <Project Path="src/ServiceDefaults/ServiceDefaults.csproj" />
   </Folder>

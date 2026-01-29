@@ -1437,6 +1437,7 @@
         "net10.0"
       ],
       "sources": {
+        "/home/orojasga/.dotnet/library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -1518,9 +1519,11 @@
           }
         },
         "centralPackageVersions": {
+          "Aspire.RabbitMQ.Client": "13.1.0",
           "Aspire.Seq": "13.1.0",
           "Microsoft.AspNetCore.App": "2.2.8",
           "Microsoft.Extensions.Http.Resilience": "10.2.0",
+          "Microsoft.Extensions.Options": "10.0.2",
           "Microsoft.Extensions.ServiceDiscovery": "10.2.0",
           "OpenIddict.Abstractions": "7.2.0",
           "OpenIddict.Client.AspNetCore": "7.2.0",
