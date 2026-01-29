@@ -15,7 +15,14 @@ The `ServiceDefaults` project simplifies the bootstrapping of essential service 
 - **Resilience**: Default HTTP client resilience handlers and service discovery integration.
 - **Service Discovery**: Built-in support for .NET Service Discovery.
 
-### 📝 Logging
+### 🚌 Event Bus (RabbitMQ)
+The `EventBus` and `EventBusRabbitMQ` projects provide a robust infrastructure for asynchronous messaging:
+- **Integration Events**: Core abstractions for defining and handling cross-service events.
+- **RabbitMQ Implementation**: High-performance, async-native implementation optimized for RabbitMQ.Client 7.0 and .NET 10.
+- **Resilience**: Integrated retry logic using Polly Resilience Pipelines to handle transient broker connection issues.
+- **Observability**: Native OpenTelemetry integration for distributed tracing, including automatic context propagation across producers and consumers.
+
+### �📝 Logging
 The `Loggers` project provides utilities for structured logging:
 - **Serilog Integration**: Easy setup of Serilog with Console and [Seq](https://datalust.co/seq) sinks.
 - **Enrichment**: Automatic enrichment with application-specific properties and log context.
@@ -37,6 +44,7 @@ To use these building blocks, reference the corresponding project in your servic
 ```bash
 dotnet add reference src/ServiceDefaults/ServiceDefaults.csproj
 dotnet add reference src/Loggers/Loggers.csproj
+dotnet add reference src/EventBusRabbitMQ/EventBusRabbitMQ.csproj
 ```
 
 In your `Program.cs`, you can then use the extensions:
@@ -50,6 +58,10 @@ builder.AddServiceDefaults();
 // Configure logging
 var logger = LoggerPrinter.CreateSerilogLogger("AppName", "MyService", builder.Configuration);
 builder.Host.UseSerilog(logger);
+
+// Register RabbitMQ Event Bus
+builder.Services.AddRabbitMQEventBus("EventBusConnection")
+    .AddSubscription<MyIntegrationEvent, MyIntegrationEventHandler>();
 
 var app = builder.Build();
 
