@@ -90,10 +90,7 @@ public sealed class EventBusRabbitMQ(
         }
     }
 
-    public void Dispose()
-    {
-        _consumerChannel?.Dispose();
-    }
+    public void Dispose() => _consumerChannel?.Dispose();
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -159,10 +156,7 @@ public sealed class EventBusRabbitMQ(
         return Task.CompletedTask;
     }
 
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
-    }
+    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     private async Task OnMessageReceived(object sender, BasicDeliverEventArgs eventArgs)
     {
@@ -241,17 +235,11 @@ public sealed class EventBusRabbitMQ(
 
     [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode", Justification = "Serialization is handled via options.")]
     [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode", Justification = "Serialization is handled via options.")]
-    private IntegrationEvent? DeserializeMessage(string message, Type eventType)
-    {
-        return JsonSerializer.Deserialize(message, eventType, _subscriptionInfo.JsonSerializerOptions) as IntegrationEvent;
-    }
+    private IntegrationEvent? DeserializeMessage(string message, Type eventType) => JsonSerializer.Deserialize(message, eventType, _subscriptionInfo.JsonSerializerOptions) as IntegrationEvent;
 
     [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode", Justification = "Serialization is handled via options.")]
     [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode", Justification = "Serialization is handled via options.")]
-    private byte[] SerializeMessage(IntegrationEvent @event)
-    {
-        return JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), _subscriptionInfo.JsonSerializerOptions);
-    }
+    private byte[] SerializeMessage(IntegrationEvent @event) => JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), _subscriptionInfo.JsonSerializerOptions);
 
     private static ResiliencePipeline CreateResiliencePipeline(int retryCount)
     {
