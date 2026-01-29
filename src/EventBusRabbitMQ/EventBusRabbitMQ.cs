@@ -1,117 +1,84 @@
 namespace OroBuildingBlocks.EventBusRabbitMQ;
 
-public class EventBusRabbitMQ(
+public sealed class EventBusRabbitMQ(
     ILogger<EventBusRabbitMQ> logger,
     IServiceProvider serviceProvider,
     IOptions<EventBusOptions> options,
-    IOptions<EventBusSubscriptionInfo> eventBusSubscriptionInfo,
-    EventBusRabbitMQLogger eventBusRabbitMQLogger) : IEventBus, IDisposable, IHostedService
+    IOptions<EventBusSubscriptionInfo> subscriptionInfo,
+    EventBusRabbitMQLogger telemetry) : IEventBus, IDisposable, IHostedService
 {
-    private const string BROKER_NAME = "eventdrivendesignbus";
-    private readonly ResiliencePipeline resiliencePipeline = CreateResiliencePipeline(options.Value.RetryCount);
-    private readonly TextMapPropagator textMapPropagator = eventBusRabbitMQLogger.Propagator;
-    private readonly ActivitySource activitySource = eventBusRabbitMQLogger.ActivitySource;
-    private readonly string queueName = options.Value.SubscriptionClientName;
-    private readonly EventBusSubscriptionInfo eventBusSubscriptionInfo = eventBusSubscriptionInfo.Value;
-    private IConnection rabbitMQConnection;
-
-    private IChannel channel;
-
-    private static ResiliencePipeline CreateResiliencePipeline(int retryCount)
-    {
-        var retryOptions = new RetryStrategyOptions
-        {
-            ShouldHandle = new PredicateBuilder().Handle<BrokerUnreachableException>().Handle<SocketException>(),
-            MaxRetryAttempts = retryCount,
-            DelayGenerator = (context) => ValueTask.FromResult(GenerateDelay(context.AttemptNumber))
-        };
-
-        return new ResiliencePipelineBuilder()
-            .AddRetry(retryOptions)
-            .Build();
-
-        static TimeSpan? GenerateDelay(int attempt) => TimeSpan.FromSeconds(Math.Pow(2, attempt));
-    }
+    private const string ExchangeName = "eventdrivendesignbus";
+    
+    private readonly ResiliencePipeline _resiliencePipeline = CreateResiliencePipeline(options.Value.RetryCount);
+    private readonly string _queueName = options.Value.SubscriptionClientName;
+    private readonly EventBusSubscriptionInfo _subscriptionInfo = subscriptionInfo.Value;
+    
+    private IConnection? _connection;
+    private IChannel? _consumerChannel;
 
     public async Task PublishAsync(IntegrationEvent integrationEvent, CancellationToken cancellationToken = default)
     {
+        var eventName = integrationEvent.GetType().Name;
+        
         if (logger.IsEnabled(LogLevel.Information))
-            logger.LogInformation("Publishing event to RabbitMQ: {EventId}", integrationEvent.Id);
-        var nameKey = integrationEvent.GetType().Name;
-
-        if (logger.IsEnabled(LogLevel.Trace))
-            logger.LogTrace("Creating RabbitMQ channel to publish event: {EventId} ({EventName})", integrationEvent.Id, nameKey);
-
-        using var channel = await rabbitMQConnection.CreateChannelAsync(cancellationToken: cancellationToken) ??
-        throw new ArgumentNullException("Channel is null");
-
-        if (logger.IsEnabled(LogLevel.Trace))
-            logger.LogTrace("Declaring RabbitMQ exchange to publish event: {EventId}", integrationEvent.Id);
-
-        await channel.ExchangeDeclareAsync(exchange: BROKER_NAME, type: "direct", cancellationToken: cancellationToken);
-
-        var contentBody = JsonSerializer.SerializeToUtf8Bytes(
-            integrationEvent, integrationEvent.GetType(), new JsonSerializerOptions
-            {
-                WriteIndented = true,
-                Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic),
-            });
-
-        var activityName = $"{nameKey} Publish";
-
-        await resiliencePipeline.ExecuteAsync(async _ =>
         {
-            using var activity = activitySource.StartActivity(activityName, ActivityKind.Producer);
-            ActivityContext contextToInject = default;
-            if (activity != null)
-            {
-                contextToInject = activity.Context;
-            }
-            else if (Activity.Current != null)
-            {
-                contextToInject = Activity.Current.Context;
-            }
+            logger.LogInformation("Publishing event to RabbitMQ: {EventId} ({EventName})", integrationEvent.Id, eventName);
+        }
 
-            var properties = new BasicProperties()
+        _connection ??= serviceProvider.GetRequiredService<IConnection>();
+        
+        using var channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
+        
+        await channel.ExchangeDeclareAsync(exchange: ExchangeName, type: ExchangeType.Direct, cancellationToken: cancellationToken);
+
+        var body = SerializeMessage(integrationEvent);
+        var activityName = $"{eventName} Publish";
+
+        await _resiliencePipeline.ExecuteAsync(async ct =>
+        {
+            using var activity = telemetry.ActivitySource.StartActivity(activityName, ActivityKind.Producer);
+            
+            var properties = new BasicProperties
             {
-                DeliveryMode = DeliveryModes.Persistent // persistent
+                DeliveryMode = DeliveryModes.Persistent
             };
 
-            static void InjectTraceContextIntoBasicProperties(IBasicProperties props, string key, string value)
-            {
-                props.Headers ??= new Dictionary<string, object?>();
-                props.Headers[key] = value;
-            }
-
-            textMapPropagator.Inject(new PropagationContext(contextToInject, Baggage.Current),
-                properties,
-                InjectTraceContextIntoBasicProperties);
-
-            ArgumentNullException.ThrowIfNull(activity);
-            SetActivityContext(activity, nameKey, "publish");
-
-            if (logger.IsEnabled(LogLevel.Trace))
-                logger.LogTrace("Publishing event to RabbitMQ: {EventId}", integrationEvent.Id);
+            InjectTelemetryContext(activity, properties);
+            SetActivityTags(activity, eventName, "publish");
 
             try
             {
                 await channel.BasicPublishAsync(
-                    exchange: BROKER_NAME,
-                    routingKey: nameKey,
+                    exchange: ExchangeName,
+                    routingKey: eventName,
                     mandatory: true,
                     basicProperties: properties,
-                    body: contentBody, cancellationToken: cancellationToken
+                    body: body,
+                    cancellationToken: ct
                 );
             }
             catch (Exception ex)
             {
-                activity.SetExceptionTags(ex);
+                activity?.SetExceptionTags(ex);
                 throw;
             }
-        });
+        }, cancellationToken);
     }
 
-    private static void SetActivityContext(Activity activity, string routingKey, string operation)
+    private void InjectTelemetryContext(Activity? activity, BasicProperties properties)
+    {
+        var contextToInject = activity?.Context ?? Activity.Current?.Context ?? default;
+        
+        telemetry.Propagator.Inject(new PropagationContext(contextToInject, Baggage.Current),
+            properties,
+            (props, key, value) =>
+            {
+                props.Headers ??= new Dictionary<string, object?>();
+                props.Headers[key] = value;
+            });
+    }
+
+    private static void SetActivityTags(Activity? activity, string routingKey, string operation)
     {
         if (activity is not null)
         {
@@ -125,32 +92,95 @@ public class EventBusRabbitMQ(
 
     public void Dispose()
     {
-        channel?.Dispose();
+        _consumerChannel?.Dispose();
+    }
+
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        // Messaging is async so we don't need to wait for it to complete.
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                logger.LogInformation("Starting RabbitMQ connection on a background thread");
+
+                _connection = serviceProvider.GetRequiredService<IConnection>();
+                
+                if (!_connection.IsOpen)
+                {
+                    logger.LogWarning("RabbitMQ connection is not open. Consumer will not start.");
+                    return;
+                }
+
+                _consumerChannel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
+
+                _consumerChannel.CallbackExceptionAsync += (sender, ea) =>
+                {
+                    logger.LogWarning(ea.Exception, "Error with RabbitMQ consumer channel");
+                    return Task.CompletedTask;
+                };
+
+                await _consumerChannel.ExchangeDeclareAsync(exchange: ExchangeName, type: ExchangeType.Direct, cancellationToken: cancellationToken);
+
+                await _consumerChannel.QueueDeclareAsync(
+                    queue: _queueName,
+                    durable: true,
+                    exclusive: false,
+                    autoDelete: false,
+                    arguments: null,
+                    cancellationToken: cancellationToken);
+
+                var consumer = new AsyncEventingBasicConsumer(_consumerChannel);
+                consumer.ReceivedAsync += OnMessageReceived;
+
+                await _consumerChannel.BasicConsumeAsync(
+                    queue: _queueName,
+                    autoAck: false,
+                    consumer: consumer,
+                    cancellationToken: cancellationToken);
+
+                foreach (var (eventName, _) in _subscriptionInfo.EventTypes)
+                {
+                    await _consumerChannel.QueueBindAsync(
+                        queue: _queueName,
+                        exchange: ExchangeName,
+                        routingKey: eventName,
+                        cancellationToken: cancellationToken);
+                }
+                
+                logger.LogInformation("RabbitMQ consumer started for queue {QueueName}", _queueName);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error starting RabbitMQ connection");
+            }
+        }, cancellationToken);
+
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
     }
 
     private async Task OnMessageReceived(object sender, BasicDeliverEventArgs eventArgs)
     {
-        static IEnumerable<string> ExtractTraceContextFromBasicProperties(IReadOnlyBasicProperties props, string key)
+        var parentContext = telemetry.Propagator.Extract(default, eventArgs.BasicProperties, (props, key) =>
         {
-            if (props.Headers.TryGetValue(key, out var value))
+            if (props.Headers?.TryGetValue(key, out var value) == true && value is byte[] bytes)
             {
-                var bytes = value as byte[];
                 return [Encoding.UTF8.GetString(bytes)];
             }
             return [];
-        }
+        });
 
-        // Extract the PropagationContext of the upstream parent from the message headers.
-        var parentContext = textMapPropagator.Extract(default, eventArgs.BasicProperties, ExtractTraceContextFromBasicProperties);
         Baggage.Current = parentContext.Baggage;
 
-        // Start an activity with a name following the semantic convention of the OpenTelemetry messaging specification.
-        // https://github.com/open-telemetry/semantic-conventions/blob/main/docs/messaging/messaging-spans.md
         var activityName = $"{eventArgs.RoutingKey} receive";
+        using var activity = telemetry.ActivitySource.StartActivity(activityName, ActivityKind.Client, parentContext.ActivityContext);
 
-        using var activity = activitySource.StartActivity(activityName, ActivityKind.Client, parentContext.ActivityContext);
-
-        SetActivityContext(activity, eventArgs.RoutingKey, "receive");
+        SetActivityTags(activity, eventArgs.RoutingKey, "receive");
 
         var eventName = eventArgs.RoutingKey;
         var message = Encoding.UTF8.GetString(eventArgs.Body.Span);
@@ -169,14 +199,15 @@ public class EventBusRabbitMQ(
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Error Processing message \"{Message}\"", message);
-
-            activity.SetExceptionTags(ex);
+            activity?.SetExceptionTags(ex);
         }
-
-        // Even on exception we take the message off the queue.
-        // in a REAL WORLD app this should be handled with a Dead Letter Exchange (DLX). 
-        // For more information see: https://www.rabbitmq.com/dlx.html
-        await channel.BasicAckAsync(eventArgs.DeliveryTag, multiple: false);
+        finally
+        {
+            if (_consumerChannel != null)
+            {
+                await _consumerChannel.BasicAckAsync(eventArgs.DeliveryTag, multiple: false);
+            }
+        }
     }
 
     private async Task ProcessEvent(string eventName, string message)
@@ -186,115 +217,51 @@ public class EventBusRabbitMQ(
             logger.LogTrace("Processing RabbitMQ event: {EventName}", eventName);
         }
 
-        await using var scope = serviceProvider.CreateAsyncScope();
-
-        if (!eventBusSubscriptionInfo.EventTypes.TryGetValue(eventName, out var eventType))
+        if (!_subscriptionInfo.EventTypes.TryGetValue(eventName, out var eventType))
         {
             logger.LogWarning("Unable to resolve event type for event name {EventName}", eventName);
             return;
         }
 
-        // Deserialize the event
         var integrationEvent = DeserializeMessage(message, eventType);
+        if (integrationEvent == null)
+        {
+            return;
+        }
 
-        // REVIEW: This could be done in parallel
-
-        // Get all the handlers using the event type as the key
-        foreach (var handler in scope.ServiceProvider.GetKeyedServices<IIntegrationEventHandler>(eventType))
+        await using var scope = serviceProvider.CreateAsyncScope();
+        
+        var handlers = scope.ServiceProvider.GetKeyedServices<IIntegrationEventHandler>(eventType);
+        
+        foreach (var handler in handlers)
         {
             await handler.Handle(integrationEvent);
         }
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-        Justification = "The 'JsonSerializer.IsReflectionEnabledByDefault' feature switch, which is set to false by default for trimmed .NET apps, ensures the JsonSerializer doesn't use Reflection.")]
-    [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode", Justification = "See above.")]
-    private IntegrationEvent DeserializeMessage(string message, Type eventType)
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode", Justification = "Serialization is handled via options.")]
+    [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode", Justification = "Serialization is handled via options.")]
+    private IntegrationEvent? DeserializeMessage(string message, Type eventType)
     {
-        return JsonSerializer.Deserialize(message, eventType, eventBusSubscriptionInfo.JsonSerializerOptions) as IntegrationEvent;
+        return JsonSerializer.Deserialize(message, eventType, _subscriptionInfo.JsonSerializerOptions) as IntegrationEvent;
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-        Justification = "The 'JsonSerializer.IsReflectionEnabledByDefault' feature switch, which is set to false by default for trimmed .NET apps, ensures the JsonSerializer doesn't use Reflection.")]
-    [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode", Justification = "See above.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode", Justification = "Serialization is handled via options.")]
+    [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode", Justification = "Serialization is handled via options.")]
     private byte[] SerializeMessage(IntegrationEvent @event)
     {
-        return JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), eventBusSubscriptionInfo.JsonSerializerOptions);
+        return JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), _subscriptionInfo.JsonSerializerOptions);
     }
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    private static ResiliencePipeline CreateResiliencePipeline(int retryCount)
     {
-        // Messaging is async so we don't need to wait for it to complete.
-        _ = Task.Factory.StartNew(async () =>
-        {
-            try
+        return new ResiliencePipelineBuilder()
+            .AddRetry(new RetryStrategyOptions
             {
-                logger.LogInformation("Starting RabbitMQ connection on a background thread");
-
-                rabbitMQConnection = serviceProvider.GetRequiredService<IConnection>();
-                if (!rabbitMQConnection.IsOpen)
-                {
-                    return;
-                }
-
-                if (logger.IsEnabled(LogLevel.Trace))
-                {
-                    logger.LogTrace("Creating RabbitMQ consumer channel");
-                }
-
-                channel = await rabbitMQConnection.CreateChannelAsync();
-
-                channel.CallbackExceptionAsync += (sender, ea) =>
-                {
-                    logger.LogWarning(ea.Exception, "Error with RabbitMQ consumer channel");
-                    return Task.CompletedTask;
-                };
-
-                await channel.ExchangeDeclareAsync(
-                    exchange: BROKER_NAME,
-                    type: "direct");
-
-                await channel.QueueDeclareAsync(
-                    queue: queueName,
-                    durable: true,
-                    exclusive: false,
-                    autoDelete: false,
-                    arguments: null);
-
-                if (logger.IsEnabled(LogLevel.Trace))
-                {
-                    logger.LogTrace("Starting RabbitMQ basic consume");
-                }
-
-                var consumer = new AsyncEventingBasicConsumer(channel);
-
-                consumer.ReceivedAsync += OnMessageReceived;
-
-                await channel.BasicConsumeAsync(
-                    queue: queueName,
-                    autoAck: false,
-                    consumer: consumer);
-
-                foreach (var (eventName, _) in eventBusSubscriptionInfo.EventTypes)
-                {
-                    await channel.QueueBindAsync(
-                        queue: queueName,
-                        exchange: BROKER_NAME,
-                        routingKey: eventName);
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error starting RabbitMQ connection");
-            }
-        },
-        TaskCreationOptions.LongRunning);
-
-        return Task.CompletedTask;
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
+                ShouldHandle = new PredicateBuilder().Handle<BrokerUnreachableException>().Handle<SocketException>(),
+                MaxRetryAttempts = retryCount,
+                DelayGenerator = context => ValueTask.FromResult<TimeSpan?>(TimeSpan.FromSeconds(Math.Pow(2, context.AttemptNumber)))
+            })
+            .Build();
     }
 }
