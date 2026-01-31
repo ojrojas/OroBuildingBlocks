@@ -5,7 +5,19 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>OroBuildingBlocks.Loggers</RootNamespace>
-
+   
+    <!-- NuGet Package Metadata -->
+    <PackageId>OroLoggers</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Oscar Rojas</Authors>
+    <Company>OROJASGA</Company>
+    <Description>A lightweight and extensible OroLoggers library for .NET applications.</Description>
+    <PackageTags>Events;Command;Notification;.NET</PackageTags>
+    <RepositoryUrl>https://github.com/ojrojas/OroBuildingBlocks</RepositoryUrl>
+    <PackageLicenseExpression>GPLv3</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/ojrojas/OroBuildingBlocks</PackageProjectUrl>
+    <PackageIcon>Assets/orologgers.png</PackageIcon>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,4 +30,7 @@
     <PackageReference Include="Serilog.Sinks.Seq" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Assets/orologgers.png" Pack="true" PackagePath="Assets/" />
+  </ItemGroup>
 </Project>

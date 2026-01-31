@@ -4,15 +4,22 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <!-- <Nullable>enable</Nullable> -->
-  </PropertyGroup>
 
-  <ItemGroup>
-    <!-- <PackageReference Include="Autofac" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
-    <PackageReference Include="RabbitMQ.Client" Version="6.4.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" /> -->
-  </ItemGroup>
+    <!-- NuGet Package Metadata -->
+    <PackageId>OroEventBusRabbitMQ</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Oscar Rojas</Authors>
+    <Company>OROJASGA</Company>
+    <Description>A lightweight and extensible OroEventBusRabbitMQ library for .NET applications.</Description>
+    <PackageTags>Events;Command;Notification;.NET</PackageTags>
+    <RepositoryUrl>https://github.com/ojrojas/OroBuildingBlocks</RepositoryUrl>
+    <PackageLicenseExpression>GPLv3</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/ojrojas/OroBuildingBlocks</PackageProjectUrl>
+    <PackageIcon>Assets/oroeventbusrabbitmq.png</PackageIcon>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+
+
+  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\EventBus\EventBus.csproj" />
@@ -20,6 +27,10 @@
 
   <ItemGroup>
     <PackageReference Include="Aspire.RabbitMQ.Client" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Assets/oroeventbusrabbitmq.png" Pack="true" PackagePath="Assets/" />
   </ItemGroup>
 
 </Project>

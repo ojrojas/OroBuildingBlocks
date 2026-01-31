@@ -7,8 +7,20 @@
     <!-- <IsAspireSharedProject>true</IsAspireSharedProject> -->
     <RootNamespace>OroBuildingBlocks.ServicesDefaults</RootNamespace>
 
+    <!-- NuGet Package Metadata -->
+    <PackageId>OroServiceDefaults</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Oscar Rojas</Authors>
+    <Company>OROJASGA</Company>
+    <Description>A lightweight and extensible OroServiceDefaults library for .NET applications.</Description>
+    <PackageTags>Events;Command;Notification;.NET</PackageTags>
+    <RepositoryUrl>https://github.com/ojrojas/OroBuildingBlocks</RepositoryUrl>
+    <PackageLicenseExpression>GPLv3</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/ojrojas/OroBuildingBlocks</PackageProjectUrl>
+    <PackageIcon>Assets/oroservicedefaults.png</PackageIcon>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
- 
+
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
@@ -25,6 +37,10 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
     <PackageReference Include="Scalar.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Assets/oroservicedefaults.png" Pack="true" PackagePath="Assets/" />
   </ItemGroup>
 
 </Project>
