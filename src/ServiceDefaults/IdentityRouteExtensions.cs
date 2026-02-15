@@ -88,10 +88,7 @@ public static class IdentityRouteExtensions
                     return Results.Problem("External authentication failed.");
                 }
 
-                var identity = new ClaimsIdentity(result.Principal.Claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                var principal = new ClaimsPrincipal(identity);
-
-                await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, result.Properties ?? new AuthenticationProperties());
+                await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, result.Principal, result.Properties ?? new AuthenticationProperties());
 
                 var redirectUri = result.Properties?.RedirectUri;
                 if (string.IsNullOrEmpty(redirectUri) || !Uri.IsWellFormedUriString(redirectUri, UriKind.RelativeOrAbsolute))
