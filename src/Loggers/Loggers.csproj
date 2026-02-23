@@ -14,7 +14,7 @@
     <Description>A lightweight and extensible OroLoggers library for .NET applications.</Description>
     <PackageTags>Events;Command;Notification;.NET</PackageTags>
     <RepositoryUrl>https://github.com/ojrojas/OroBuildingBlocks</RepositoryUrl>
-    <PackageLicenseExpression>GPLv3</PackageLicenseExpression>
+    <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/ojrojas/OroBuildingBlocks</PackageProjectUrl>
     <PackageIcon>Assets/orologgers.png</PackageIcon>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
