@@ -9,7 +9,13 @@ public static class LoggersExtensions
     public static void AddServicesWritersLogger(
         this IHostApplicationBuilder builder, IConfiguration configuration)
     {
-        builder.AddSeqEndpoint("seq");
+        var seqConfig = configuration.GetSection("Seq");
+
+        if (seqConfig.Exists())
+        {
+            builder.AddSeqEndpoint("seq");
+        }
+        
         builder.Services.AddSerilog();
         builder.Services.AddLogging(options => options.AddSeq());
     }
