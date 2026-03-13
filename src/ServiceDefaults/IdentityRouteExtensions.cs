@@ -29,6 +29,12 @@ public class IdentityEndpointOptions
     /// Default redirect URI after authentication.
     /// </summary>
     public string DefaultRedirectUri { get; set; } = "/";
+
+    /// <summary>
+    /// When true, the callback endpoint will perform a local signin if the redirect URI is local.
+    /// When false, the callback only redirects and the client is responsible for signing in.
+    /// </summary>
+    public bool SignInLocal { get; set; } = true;
 }
 
 /// <summary>
@@ -80,23 +86,35 @@ public static class IdentityRouteExtensions
             });
 
             // Endpoint Callback (signin-oidc)
-            app.MapMethods(options.CallbackPath, [HttpMethods.Get, HttpMethods.Post], async (HttpContext context) =>
+            app.MapMethods(options.CallbackPath, new[] { HttpMethods.Get, HttpMethods.Post }, async (HttpContext context) =>
             {
-                var result = await context.AuthenticateAsync(OpenIddictClientAspNetCoreDefaults.AuthenticationScheme);
-                if (!result.Succeeded || result.Principal == null)
-                {
+                var result = await context.AuthenticateAsync(OpenIddictClientAspNetCoreDefaults.AuthenticationScheme); 
+                if (!result.Succeeded || result.Principal == null) 
                     return Results.Problem("External authentication failed.");
-                }
-
-                await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, result.Principal, result.Properties ?? new AuthenticationProperties());
 
                 var redirectUri = result.Properties?.RedirectUri;
                 if (string.IsNullOrEmpty(redirectUri) || !Uri.IsWellFormedUriString(redirectUri, UriKind.RelativeOrAbsolute))
-                {
                     redirectUri = options.DefaultRedirectUri;
+
+                // Decide si el signin debe hacerse localmente o en la app destino
+                var doLocalSignIn = false;
+                if (Uri.TryCreate(redirectUri, UriKind.RelativeOrAbsolute, out var r))
+                {
+                    doLocalSignIn = !r.IsAbsoluteUri
+                        || (string.Equals(r.Host, context.Request.Host.Host, StringComparison.OrdinalIgnoreCase)
+                            && r.Port == (context.Request.Host.Port ?? (context.Request.IsHttps ? 443 : 80)));
+                }
+
+                if (options.SignInLocal && doLocalSignIn)
+                {
+                    var currentSub = context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    var incomingSub = result.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    if (currentSub != incomingSub)
+                        await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, result.Principal, result.Properties ?? new AuthenticationProperties());
                 }
 
                 return Results.Redirect(redirectUri);
+
             }).DisableAntiforgery();
 
             return app;
