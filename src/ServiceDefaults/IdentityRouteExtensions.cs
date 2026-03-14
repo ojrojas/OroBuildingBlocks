@@ -56,13 +56,17 @@ public static class IdentityRouteExtensions
             configureOptions?.Invoke(options);
 
             // Endpoint de Login (Challenge)
-            app.MapGet(options.LoginPath, (string? returnUrl) =>
+            app.MapGet(options.LoginPath, (string? returnUrl, bool localSignIn = false) =>
             {
                 var properties = new AuthenticationProperties
                 {
                     RedirectUri = returnUrl ?? options.DefaultRedirectUri
                 };
-                return Results.Challenge(properties, [OpenIddictClientAspNetCoreDefaults.AuthenticationScheme]);
+                if (localSignIn)
+                {
+                    properties.Parameters["local_signin"] = "true";
+                }
+                return Results.Challenge(properties, new[] { OpenIddictClientAspNetCoreDefaults.AuthenticationScheme });
             });
 
             // Endpoint de Logout (SignOut)
@@ -107,10 +111,20 @@ public static class IdentityRouteExtensions
 
                 if (options.SignInLocal && doLocalSignIn)
                 {
+                    // Only perform local sign-in when explicitly requested by the initiating challenge.
+                    // This avoids creating unintended authentication cookies in client apps.
+                    var shouldLocalSignIn = false;
+                    if (result.Properties != null && result.Properties.Parameters.TryGetValue("local_signin", out var obj) && obj is string s && bool.TryParse(s, out var b))
+                    {
+                        shouldLocalSignIn = b;
+                    }
+
                     var currentSub = context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                     var incomingSub = result.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                    if (currentSub != incomingSub)
+                    if (shouldLocalSignIn && currentSub != incomingSub)
+                    {
                         await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, result.Principal, result.Properties ?? new AuthenticationProperties());
+                    }
                 }
 
                 return Results.Redirect(redirectUri);

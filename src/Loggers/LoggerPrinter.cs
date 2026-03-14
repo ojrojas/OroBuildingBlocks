@@ -10,13 +10,18 @@ public static class LoggerPrinter
     {
         string? SeqEndpoint = configuration["ConnectionStrings:Seq"] ?? string.Empty;
         ArgumentNullException.ThrowIfNull(SeqEndpoint);
-        var logger = new LoggerConfiguration()
+        var loggerBuilding = new LoggerConfiguration()
               .MinimumLevel.Verbose()
               .Enrich.WithProperty(key, value)
               .Enrich.FromLogContext()
-              .WriteTo.Console()
-              .WriteTo.Seq(SeqEndpoint)
-              .CreateLogger();
+              .WriteTo.Console();
+
+        if(!string.IsNullOrWhiteSpace(SeqEndpoint))
+        {
+            loggerBuilding.WriteTo.Seq(SeqEndpoint);
+        }
+
+        var logger = loggerBuilding.CreateLogger();
 
         Serilog.Debugging.SelfLog.Enable(Console.Error);
 
