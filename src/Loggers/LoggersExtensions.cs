@@ -11,6 +11,13 @@ public static class LoggersExtensions
     {
         var seqConfig = configuration.GetSection("Seq");
 
+        builder.Logging.ClearProviders();
+
+        if(builder.Environment.IsDevelopment())
+        {
+            builder.Logging.AddDebug();
+        }
+
         if (seqConfig.Exists())
         {
             builder.AddSeqEndpoint("seq");
