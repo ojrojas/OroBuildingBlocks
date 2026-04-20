@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using OroBuildingBlocks.EventBus.Abstractions;
 using OroBuildingBlocks.EventBus.Extensions;
 using OroBuildingBlocks.EventBusRabbitMQ;
 using WebApiExample1.IntegrateEvents;

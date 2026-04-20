@@ -1,8 +1,8 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
-using OroBuildingBlocks.EventBus.Abstractions;
-using OroBuildingBlocks.EventBus.Events;
 
+// OroBuildingBlocks
+// Copyright (C) 2026 Oscar Rojas
+// Licensed under the GNU AGPL v3.0 or later.
+// See the LICENSE file in the project root for details.
 namespace OroBuildingBlocks.EventBus.Extensions;
 
 public static class EventBusBuilderExtensions

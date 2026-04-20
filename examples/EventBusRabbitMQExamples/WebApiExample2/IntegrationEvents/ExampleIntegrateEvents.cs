@@ -1,4 +1,3 @@
-using System;
 using OroBuildingBlocks.EventBus.Events;
 
 namespace WebApiExample2.IntegrationEvents;
