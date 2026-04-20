@@ -8,9 +8,11 @@
   <ItemGroup>
   </ItemGroup>
   <ItemGroup>
+    <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="13.2.2" />
     <PackageVersion Include="Aspire.RabbitMQ.Client" Version="13.2.2" />
     <PackageVersion Include="Aspire.Seq" Version="13.2.2" />
     <PackageVersion Include="Microsoft.AspNetCore.App" Version="2.2.8" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.6" />
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.5.0" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.6" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.5.0" />

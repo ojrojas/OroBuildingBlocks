@@ -1,38 +1,35 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using OroBuildingBlocks.EventBus.Abstractions;
+using OroBuildingBlocks.EventBus.Events;
 
 namespace OroBuildingBlocks.EventBus.Extensions;
 
-public static class  EventBusBuilderExtensions
+public static class EventBusBuilderExtensions
 {
-    extension(IEventBusBuilder builder)
+    public static IEventBusBuilder ConfigureJsonOptions(this IEventBusBuilder builder, Action<JsonSerializerOptions> configure)
     {
-        // Extension methods for EventBusBuilder can be added here in the future
-        public IEventBusBuilder ConfigureJsonOptions(Action<JsonSerializerOptions> configure)
+        ArgumentNullException.ThrowIfNull(builder);
+        ArgumentNullException.ThrowIfNull(configure);
+
+        builder.Services.Configure<EventBusSubscriptionInfo>(opt =>
         {
-            ArgumentNullException.ThrowIfNull(builder);
-            ArgumentNullException.ThrowIfNull(configure);
+            configure(opt.JsonSerializerOptions);
+        });
 
-            builder.Services.Configure<EventBusSubscriptionInfo>(opt =>
-            {
-                configure(opt.JsonSerializerOptions);
-            });
+        return builder;
+    }
 
-            return builder;
-        }
-
-        public IEventBusBuilder AddSubscriptionManager<T, [DynamicallyAccessedMembers(
-            DynamicallyAccessedMemberTypes.PublicConstructors)] TH>(
-    )
-                where T : IntegrationEvent
-                where TH : class, IIntegrationEventHandler<T>
+    public static IEventBusBuilder AddSubscriptionManager<T, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TH>(this IEventBusBuilder builder)
+        where T : IntegrationEvent
+        where TH : class, IIntegrationEventHandler<T>
+    {
+        builder.Services.AddKeyedTransient<IIntegrationEventHandler, TH>(typeof(T));
+        builder.Services.Configure<EventBusSubscriptionInfo>(opt =>
         {
-            builder.Services.AddKeyedTransient<IIntegrationEventHandler, TH>(typeof(T));
-            builder.Services.Configure<EventBusSubscriptionInfo>(opt =>
-            {
-                opt.EventTypes[typeof(T).Name] = typeof(T);
-            });
+            opt.EventTypes[typeof(T).Name] = typeof(T);
+        });
 
-            return builder;
-        }
+        return builder;
     }
 }

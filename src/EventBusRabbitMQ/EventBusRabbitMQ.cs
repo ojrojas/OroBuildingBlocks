@@ -7,7 +7,7 @@ public sealed class EventBusRabbitMQ(
     IOptions<EventBusSubscriptionInfo> subscriptionInfo,
     EventBusRabbitMQLogger telemetry) : IEventBus, IDisposable, IHostedService
 {
-    private const string ExchangeName = "eventdrivendesignbus";
+    private const string ExchangeName = "oroeventdrivenexchange";
     
     private readonly ResiliencePipeline _resiliencePipeline = CreateResiliencePipeline(options.Value.RetryCount);
     private readonly string _queueName = options.Value.SubscriptionClientName;
@@ -164,9 +164,9 @@ public sealed class EventBusRabbitMQ(
         {
             if (props.Headers?.TryGetValue(key, out var value) == true && value is byte[] bytes)
             {
-                return [Encoding.UTF8.GetString(bytes)];
+                return new[] { Encoding.UTF8.GetString(bytes) };
             }
-            return [];
+            return Array.Empty<string>();
         });
 
         Baggage.Current = parentContext.Baggage;

@@ -1,8 +1,15 @@
 <Solution>
+  <Folder Name="/examples/" />
+  <Folder Name="/examples/EventBusRabbitMQExamples/">
+    <Project Path="examples/EventBusRabbitMQExamples/AppHost/AppHost.csproj" />
+    <Project Path="examples/EventBusRabbitMQExamples/WebApiExample1/WebApiExample1.csproj" />
+    <Project Path="examples/EventBusRabbitMQExamples/WebApiExample2/WebApiExample2.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/EventBus/EventBus.csproj" />
     <Project Path="src/EventBusRabbitMQ/EventBusRabbitMQ.csproj" />
     <Project Path="src/Loggers/Loggers.csproj" />
     <Project Path="src/ServiceDefaults/ServiceDefaults.csproj" />
   </Folder>
+ 
 </Solution>

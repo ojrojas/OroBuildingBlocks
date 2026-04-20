@@ -1,0 +1,6 @@
+@WebApi1Example1_HostAddress = https://localhost:7096
+
+GET {{WebApi1Example1_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -7,7 +7,7 @@
 
     <!-- NuGet Package Metadata -->
     <PackageId>OroEventBusRabbitMQ</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>Oscar Rojas</Authors>
     <Company>OROJASGA</Company>
     <Description>A lightweight and extensible OroEventBusRabbitMQ library for .NET applications.</Description>
