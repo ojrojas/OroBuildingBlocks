@@ -10,7 +10,7 @@
     <PackageId>OroLoggers</PackageId>
     <Version>1.0.0</Version>
     <Authors>Oscar Rojas</Authors>
-    <Company>OROJASGA</Company>
+    <Company>Orojas</Company>
     <Description>A lightweight and extensible OroLoggers library for .NET applications.</Description>
     <PackageTags>Events;Command;Notification;.NET</PackageTags>
     <RepositoryUrl>https://github.com/ojrojas/OroBuildingBlocks</RepositoryUrl>
