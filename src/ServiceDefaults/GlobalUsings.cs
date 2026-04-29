@@ -21,3 +21,7 @@ global using Microsoft.AspNetCore.Routing;
 global using OpenIddict.Client.AspNetCore;
 global using System.Reflection;
 global using Microsoft.AspNetCore.DataProtection;
+global using System.Diagnostics;
+global using Microsoft.AspNetCore.Diagnostics;
+global using Microsoft.AspNetCore.Http.Features;
+global using Microsoft.AspNetCore.Mvc;
