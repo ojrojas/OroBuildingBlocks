@@ -9,10 +9,10 @@ public static class DataProtectionExtensions
     /// <summary>
     /// Adds and configures data protection services based on configuration settings, with support for file system, Redis, or Azure Blob storage providers. Falls back to file system if provider configuration is missing or if required extensions are not available at runtime. Logs configuration decisions and errors to the console for visibility.
     /// </summary>
-    /// <param name="services"></param>
-    /// <param name="configuration"></param>
-    /// <param name="environment"></param>
-    /// <returns></returns>
+    /// <param name="services">Services injections</param>
+    /// <param name="configuration">Configuration injections</param>
+    /// <param name="environment">Enviroments injections</param>
+    /// <returns>Service Collection added</returns>
     public static IServiceCollection AddConfiguredDataProtection(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
         ArgumentNullException.ThrowIfNull(services);
@@ -59,9 +59,9 @@ public static class DataProtectionExtensions
                 if (extType != null && multiplexerType != null)
                 {
                     var connectMethod = multiplexerType.GetMethod("Connect", new[] { typeof(string) });
-                    var multiplexer = connectMethod.Invoke(null, new object[] { redisConfig });
+                    var multiplexer = connectMethod?.Invoke(null, new object[] { redisConfig });
                     var getDbMethod = multiplexerType.GetMethod("GetDatabase", Type.EmptyTypes);
-                    var database = getDbMethod.Invoke(multiplexer, null);
+                    var database = getDbMethod?.Invoke(multiplexer, null);
 
                     var persistMethod = extType.GetMethods(BindingFlags.Public | BindingFlags.Static)
                         .FirstOrDefault(m => m.Name == "PersistKeysToStackExchangeRedis");
@@ -69,7 +69,7 @@ public static class DataProtectionExtensions
                     if (persistMethod != null)
                     {
                         // Expected signature: (IDataProtectionBuilder builder, object database, string key)
-                        persistMethod.Invoke(null, new object[] { dpBuilder, database, "DataProtection-Keys" });
+                        persistMethod.Invoke(null, [dpBuilder, database, "DataProtection-Keys"]);
                         logger.LogInformation("DataProtection: configured Redis key persistence via runtime extension.");
                         return services;
                     }
@@ -113,9 +113,9 @@ public static class DataProtectionExtensions
                 if (extType != null && blobServiceType != null)
                 {
                     var ctor = blobServiceType.GetConstructor([typeof(string)]);
-                    var blobServiceClient = ctor.Invoke([conn]);
+                    var blobServiceClient = ctor?.Invoke([conn]);
                     var getContainerMethod = blobServiceType.GetMethod("GetBlobContainerClient", [typeof(string)]);
-                    var containerClient = getContainerMethod.Invoke(blobServiceClient, [containerName]);
+                    var containerClient = getContainerMethod?.Invoke(blobServiceClient, [containerName]);
 
                     var persistMethod = extType.GetMethods(BindingFlags.Public | BindingFlags.Static)
                         .FirstOrDefault(m => m.Name == "PersistKeysToAzureBlobStorage");

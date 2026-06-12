@@ -66,7 +66,7 @@ public static class IdentityRouteExtensions
                 {
                     properties.Parameters["local_signin"] = "true";
                 }
-                return Results.Challenge(properties, new[] { OpenIddictClientAspNetCoreDefaults.AuthenticationScheme });
+                return Results.Challenge(properties, [OpenIddictClientAspNetCoreDefaults.AuthenticationScheme]);
             });
 
             // Endpoint de Logout (SignOut)
@@ -90,7 +90,7 @@ public static class IdentityRouteExtensions
             });
 
             // Endpoint Callback (signin-oidc)
-            app.MapMethods(options.CallbackPath, new[] { HttpMethods.Get, HttpMethods.Post }, async (HttpContext context) =>
+            app.MapMethods(options.CallbackPath, [HttpMethods.Get, HttpMethods.Post], async (HttpContext context) =>
             {
                 var result = await context.AuthenticateAsync(OpenIddictClientAspNetCoreDefaults.AuthenticationScheme); 
                 if (!result.Succeeded || result.Principal == null) 
@@ -123,7 +123,7 @@ public static class IdentityRouteExtensions
                     var incomingSub = result.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                     if (shouldLocalSignIn && currentSub != incomingSub)
                     {
-                        await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, result.Principal, result.Properties ?? new AuthenticationProperties());
+                        await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, result.Principal, result?.Properties ?? new AuthenticationProperties());
                     }
                 }
 
