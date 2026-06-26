@@ -2,37 +2,26 @@
 // Copyright (C) 2026 Oscar Rojas
 // Licensed under the GNU AGPL v3.0 or later.
 // See the LICENSE file in the project root for details.
-namespace OroBuildingBlocks.ServiceDefaults;
+namespace OroBuildingBlocks.ServicesDefaults;
 
 public static class AsyncExtensions
 {
-
-    /// <summary>
-    /// To list async scope inner into awaiter
-    /// </summary>
-    /// <typeparam name="T">Type parameter list</typeparam>
-    /// <param name="source">Source elements into list</param>
-    /// <returns>List sync</returns>
-    /// <exception cref="ArgumentNullException">Argument null exception</exception>
-    extension<T>(IAsyncEnumerable<T> source)
+    public static ValueTask<List<T>> ToListExtensionsAsync<T>(this IAsyncEnumerable<T> source)
     {
-        public ValueTask<List<T>> ToListExtensionsAsync()
+        ArgumentNullException.ThrowIfNull(source);
+
+        return ExecutionAsync();
+
+        async ValueTask<List<T>> ExecutionAsync()
         {
-            ArgumentNullException.ThrowIfNull(source);
+            var list = new List<T>();
 
-            return ExecutionAsync();
-
-            async ValueTask<List<T>> ExecutionAsync()
+            await foreach (var i in source)
             {
-                var list = new List<T>();
-
-                await foreach (var i in source)
-                {
-                    list.Add(i);
-                }
-
-                return list;
+                list.Add(i);
             }
+
+            return list;
         }
     }
 }

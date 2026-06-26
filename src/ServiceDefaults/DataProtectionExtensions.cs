@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Oscar Rojas
 // Licensed under the GNU AGPL v3.0 or later.
 // See the LICENSE file in the project root for details.
-namespace OroBuildingBlocks.ServiceDefaults;
+namespace OroBuildingBlocks.ServicesDefaults;
 
 public static class DataProtectionExtensions
 {
@@ -12,8 +12,9 @@ public static class DataProtectionExtensions
     /// <param name="services">Services injections</param>
     /// <param name="configuration">Configuration injections</param>
     /// <param name="environment">Enviroments injections</param>
+    /// <param name="loggerFactory">Logger factory for logging (optional)</param>
     /// <returns>Service Collection added</returns>
-    public static IServiceCollection AddConfiguredDataProtection(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
+    public static IServiceCollection AddConfiguredDataProtection(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment, ILoggerFactory? loggerFactory = null)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
@@ -23,8 +24,8 @@ public static class DataProtectionExtensions
         var provider = configuration["DataProtection:Provider"] ?? "File";
 
         var dpBuilder = services.AddDataProtection().SetApplicationName(applicationName);
-        var logger = services.BuildServiceProvider().GetRequiredService<ILoggerFactory>().CreateLogger("DataProtectionExtensions");
-        logger.LogInformation("Configuring Data Protection with provider: {Provider} and application name: {AppName}", provider, applicationName);
+        var logger = loggerFactory?.CreateLogger("DataProtectionExtensions");
+        logger?.LogInformation("Configuring Data Protection with provider: {Provider} and application name: {AppName}", provider, applicationName);
 
         static void PersistToFile(IDataProtectionBuilder builder, IHostEnvironment env, string pathToFiles = "data-protection-keys", ILogger? logger = null)
         {
@@ -39,7 +40,7 @@ public static class DataProtectionExtensions
             var redisConfig = configuration["DataProtection:Redis:Configuration"];
             if (string.IsNullOrWhiteSpace(redisConfig))
             {
-                logger.LogWarning("DataProtection provider 'Redis' selected but DataProtection:Redis:Configuration is empty. Falling back to file system.");
+                logger?.LogWarning("DataProtection provider 'Redis' selected but DataProtection:Redis:Configuration is empty. Falling back to file system.");
                 PersistToFile(dpBuilder, environment, logger: logger);
                 return services;
             }
@@ -70,16 +71,16 @@ public static class DataProtectionExtensions
                     {
                         // Expected signature: (IDataProtectionBuilder builder, object database, string key)
                         persistMethod.Invoke(null, [dpBuilder, database, "DataProtection-Keys"]);
-                        logger.LogInformation("DataProtection: configured Redis key persistence via runtime extension.");
+                        logger?.LogInformation("DataProtection: configured Redis key persistence via runtime extension.");
                         return services;
                     }
                 }
 
-                logger.LogWarning("DataProtection: Redis extension or StackExchange.Redis not available at runtime. Falling back to file system.");
+                logger?.LogWarning("DataProtection: Redis extension or StackExchange.Redis not available at runtime. Falling back to file system.");
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "DataProtection: error configuring Redis provider. Falling back to file system.");
+                logger?.LogError(ex, "DataProtection: error configuring Redis provider. Falling back to file system.");
             }
 
             PersistToFile(dpBuilder, environment, logger: logger);
@@ -93,7 +94,7 @@ public static class DataProtectionExtensions
 
             if (string.IsNullOrWhiteSpace(conn))
             {
-                logger.LogWarning("DataProtection provider 'AzureBlob' selected but connection string is empty. Falling back to file system.");
+                logger?.LogWarning("DataProtection provider 'AzureBlob' selected but connection string is empty. Falling back to file system.");
                 PersistToFile(dpBuilder, environment, logger: logger);
                 return services;
             }
@@ -124,16 +125,16 @@ public static class DataProtectionExtensions
                     {
                         // Expected signature: (IDataProtectionBuilder builder, BlobContainerClient containerClient, string blobName)
                         persistMethod.Invoke(null, [dpBuilder, containerClient, "keys.xml"]);
-                        logger.LogInformation("DataProtection: configured Azure Blob key persistence via runtime extension.");
+                        logger?.LogInformation("DataProtection: configured Azure Blob key persistence via runtime extension.");
                         return services;
                     }
                 }
 
-                logger.LogWarning("DataProtection: Azure Blob extension not available at runtime. Falling back to file system.");
+                logger?.LogWarning("DataProtection: Azure Blob extension not available at runtime. Falling back to file system.");
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "DataProtection: error configuring AzureBlob provider. Falling back to file system.");
+                logger?.LogError(ex, "DataProtection: error configuring AzureBlob provider. Falling back to file system.");
             }
 
             PersistToFile(dpBuilder, environment, logger: logger);

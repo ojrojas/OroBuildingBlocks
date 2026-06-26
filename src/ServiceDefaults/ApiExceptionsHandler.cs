@@ -29,8 +29,6 @@ public sealed class ApiExceptionsHandler(IProblemDetailsService problemDetailsSe
                 {
                     ["traceId"] = activity?.Id,
                     ["requestId"] = httpContext.TraceIdentifier,
-                    ["stactTrace"] = exception.StackTrace,
-                    ["source"] = exception.Source
                 }
             }
         });

@@ -6,7 +6,7 @@ namespace OroBuildingBlocks.EventBusRabbitMQ;
 
 public class EventBusRabbitMQLogger
 {
-    public const string ActivityName = "OroBuildingBlocks.EventBusRabbitMQ";
-    public ActivitySource ActivitySource = new("OroBuildingBlocks.EventBusRabbitMQ");
-    public TextMapPropagator  Propagator = Propagators.DefaultTextMapPropagator;
+    public static string ActivityName { get; } = "OroBuildingBlocks.EventBusRabbitMQ";
+    public ActivitySource ActivitySource { get; } = new("OroBuildingBlocks.EventBusRabbitMQ");
+    public TextMapPropagator Propagator { get; } = Propagators.DefaultTextMapPropagator;
 }

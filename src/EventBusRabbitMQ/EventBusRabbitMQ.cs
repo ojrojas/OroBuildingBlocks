@@ -18,6 +18,7 @@ public sealed class EventBusRabbitMQ(
     private readonly EventBusSubscriptionInfo _subscriptionInfo = subscriptionInfo.Value;
     
     private IConnection? _connection;
+    private readonly object _connectionLock = new();
     private IChannel? _consumerChannel;
 
     public async Task PublishAsync(IntegrationEvent integrationEvent, CancellationToken cancellationToken = default)
@@ -29,9 +30,9 @@ public sealed class EventBusRabbitMQ(
             logger.LogInformation("Publishing event to RabbitMQ: {EventId} ({EventName})", integrationEvent.Id, eventName);
         }
 
-        _connection ??= serviceProvider.GetRequiredService<IConnection>();
+        var connection = GetOrCreateConnection();
         
-        using var channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
+        using var channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
         
         await channel.ExchangeDeclareAsync(exchange: ExchangeName, type: ExchangeType.Direct, cancellationToken: cancellationToken);
 
@@ -94,7 +95,27 @@ public sealed class EventBusRabbitMQ(
         }
     }
 
-    public void Dispose() => _consumerChannel?.Dispose();
+    public void Dispose()
+    {
+        _consumerChannel?.Dispose();
+        (_connection as IDisposable)?.Dispose();
+    }
+
+    private IConnection GetOrCreateConnection()
+    {
+        if (_connection is { IsOpen: true })
+            return _connection;
+
+        lock (_connectionLock)
+        {
+            if (_connection is { IsOpen: true })
+                return _connection;
+
+            _connection?.Dispose();
+            _connection = serviceProvider.GetRequiredService<IConnection>();
+            return _connection;
+        }
+    }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -183,6 +204,7 @@ public sealed class EventBusRabbitMQ(
         var eventName = eventArgs.RoutingKey;
         var message = Encoding.UTF8.GetString(eventArgs.Body.Span);
 
+        var success = false;
         try
         {
             activity?.SetTag("message", message);
@@ -193,6 +215,7 @@ public sealed class EventBusRabbitMQ(
             }
 
             await ProcessEvent(eventName, message);
+            success = true;
         }
         catch (Exception ex)
         {
@@ -203,7 +226,14 @@ public sealed class EventBusRabbitMQ(
         {
             if (_consumerChannel != null)
             {
-                await _consumerChannel.BasicAckAsync(eventArgs.DeliveryTag, multiple: false);
+                if (success)
+                {
+                    await _consumerChannel.BasicAckAsync(eventArgs.DeliveryTag, multiple: false);
+                }
+                else
+                {
+                    await _consumerChannel.BasicNackAsync(eventArgs.DeliveryTag, multiple: false, requeue: true);
+                }
             }
         }
     }

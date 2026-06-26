@@ -8,17 +8,16 @@ public static class LoggerPrinter
 {
     public static Serilog.ILogger CreateSerilogLogger(string key, string value, IConfiguration configuration)
     {
-        string? SeqEndpoint = configuration["ConnectionStrings:Seq"] ?? string.Empty;
-        //ArgumentNullException.ThrowIfNull(SeqEndpoint);
+        var seqEndpoint = configuration["ConnectionStrings:Seq"];
         var loggerBuilding = new LoggerConfiguration()
               .MinimumLevel.Verbose()
               .Enrich.WithProperty(key, value)
               .Enrich.FromLogContext()
               .WriteTo.Console();
 
-        if(!string.IsNullOrWhiteSpace(SeqEndpoint))
+        if(!string.IsNullOrWhiteSpace(seqEndpoint))
         {
-            loggerBuilding.WriteTo.Seq(SeqEndpoint);
+            loggerBuilding.WriteTo.Seq(seqEndpoint);
         }
 
         var logger = loggerBuilding.CreateLogger();
