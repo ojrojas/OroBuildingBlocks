@@ -1,7 +1,16 @@
+// OroBuildingBlocks
+// Copyright (C) 2026 Oscar Rojas
+// Licensed under the GNU AGPL v3.0 or later.
+// See the LICENSE file in the project root for details.
 namespace OroBuildingBlocks.ServicesDefaults;
 
+/// <summary>
+/// Global exception handler that converts unhandled exceptions to structured Problem Details responses.
+/// <see cref="ApplicationException"/> maps to 400 Bad Request; all others map to 500 Internal Server Error.
+/// </summary>
 public sealed class ApiExceptionsHandler(IProblemDetailsService problemDetailsService) : IExceptionHandler
 {
+    /// <inheritdoc />
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
         Exception exception,

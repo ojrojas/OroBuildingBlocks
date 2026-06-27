@@ -5,10 +5,18 @@
 namespace OroBuildingBlocks.ServicesDefaults;
 
 /// <summary>
-/// Get authentication claim destinations.
+/// Provides claim destination mapping for OpenIddict token issuance.
+/// Determines whether a claim should be included in the access token, identity token, or both.
 /// </summary>
 public static class GetDestination
 {
+    /// <summary>
+    /// Returns the token destinations for a given claim.
+    /// Name, subject, email, and role claims are included in both access and identity tokens.
+    /// All other claims are included only in the access token.
+    /// </summary>
+    /// <param name="claim">The claim to evaluate.</param>
+    /// <returns>A collection of destination strings (e.g. "access_token", "id_token").</returns>
     public static IEnumerable<string> GetDestinations(Claim claim)
     {
         return claim.Type switch

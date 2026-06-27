@@ -4,16 +4,22 @@
 // See the LICENSE file in the project root for details.
 namespace OroBuildingBlocks.Loggers;
 
+/// <summary>
+/// Extension methods for configuring Serilog with Seq integration.
+/// </summary>
 public static class LoggersExtensions
 {
+    /// <summary>
+    /// Configures logging with Serilog, Seq, and debug output (in development).
+    /// </summary>
+    /// <param name="builder">The host application builder.</param>
+    /// <param name="configuration">The application configuration, used to read Seq settings.</param>
     public static void AddServicesWritersLogger(
         this IHostApplicationBuilder builder, IConfiguration configuration)
     {
         var seqConfig = configuration.GetSection("Seq");
 
-        builder.Logging.ClearProviders();
-
-        if(builder.Environment.IsDevelopment())
+        if (builder.Environment.IsDevelopment())
         {
             builder.Logging.AddDebug();
         }
@@ -22,7 +28,7 @@ public static class LoggersExtensions
         {
             builder.AddSeqEndpoint("seq");
         }
-        
+
         builder.Services.AddSerilog();
         builder.Services.AddLogging(options => options.AddSeq());
     }

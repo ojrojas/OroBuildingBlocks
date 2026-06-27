@@ -12,28 +12,27 @@ public sealed class EventBusRabbitMQ(
     EventBusRabbitMQLogger telemetry) : IEventBus, IDisposable, IHostedService
 {
     private const string ExchangeName = "oroeventdrivenexchange";
-    
+
     private readonly ResiliencePipeline _resiliencePipeline = CreateResiliencePipeline(options.Value.RetryCount);
     private readonly string _queueName = options.Value.SubscriptionClientName;
     private readonly EventBusSubscriptionInfo _subscriptionInfo = subscriptionInfo.Value;
-    
+
     private IConnection? _connection;
     private readonly object _connectionLock = new();
     private IChannel? _consumerChannel;
-
     public async Task PublishAsync(IntegrationEvent integrationEvent, CancellationToken cancellationToken = default)
     {
         var eventName = integrationEvent.GetType().Name;
-        
+
         if (logger.IsEnabled(LogLevel.Information))
         {
             logger.LogInformation("Publishing event to RabbitMQ: {EventId} ({EventName})", integrationEvent.Id, eventName);
         }
 
         var connection = GetOrCreateConnection();
-        
+
         using var channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
-        
+
         await channel.ExchangeDeclareAsync(exchange: ExchangeName, type: ExchangeType.Direct, cancellationToken: cancellationToken);
 
         var body = SerializeMessage(integrationEvent);
@@ -42,7 +41,7 @@ public sealed class EventBusRabbitMQ(
         await _resiliencePipeline.ExecuteAsync(async ct =>
         {
             using var activity = telemetry.ActivitySource.StartActivity(activityName, ActivityKind.Producer);
-            
+
             var properties = new BasicProperties
             {
                 DeliveryMode = DeliveryModes.Persistent
@@ -73,7 +72,7 @@ public sealed class EventBusRabbitMQ(
     private void InjectTelemetryContext(Activity? activity, BasicProperties properties)
     {
         var contextToInject = activity?.Context ?? Activity.Current?.Context ?? default;
-        
+
         telemetry.Propagator.Inject(new PropagationContext(contextToInject, Baggage.Current),
             properties,
             (props, key, value) =>
@@ -119,66 +118,73 @@ public sealed class EventBusRabbitMQ(
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        // Messaging is async so we don't need to wait for it to complete.
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                logger.LogInformation("Starting RabbitMQ connection on a background thread");
-
-                _connection = serviceProvider.GetRequiredService<IConnection>();
-                
-                if (!_connection.IsOpen)
-                {
-                    logger.LogWarning("RabbitMQ connection is not open. Consumer will not start.");
-                    return;
-                }
-
-                _consumerChannel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
-
-                _consumerChannel.CallbackExceptionAsync += (sender, ea) =>
-                {
-                    logger.LogWarning(ea.Exception, "Error with RabbitMQ consumer channel");
-                    return Task.CompletedTask;
-                };
-
-                await _consumerChannel.ExchangeDeclareAsync(exchange: ExchangeName, type: ExchangeType.Direct, cancellationToken: cancellationToken);
-
-                await _consumerChannel.QueueDeclareAsync(
-                    queue: _queueName,
-                    durable: true,
-                    exclusive: false,
-                    autoDelete: false,
-                    arguments: null,
-                    cancellationToken: cancellationToken);
-
-                var consumer = new AsyncEventingBasicConsumer(_consumerChannel);
-                consumer.ReceivedAsync += OnMessageReceived;
-
-                await _consumerChannel.BasicConsumeAsync(
-                    queue: _queueName,
-                    autoAck: false,
-                    consumer: consumer,
-                    cancellationToken: cancellationToken);
-
-                foreach (var (eventName, _) in _subscriptionInfo.EventTypes)
-                {
-                    await _consumerChannel.QueueBindAsync(
-                        queue: _queueName,
-                        exchange: ExchangeName,
-                        routingKey: eventName,
-                        cancellationToken: cancellationToken);
-                }
-                
-                logger.LogInformation("RabbitMQ consumer started for queue {QueueName}", _queueName);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error starting RabbitMQ connection");
-            }
-        }, cancellationToken);
-
+        _ = StartConsumerAsync(cancellationToken);
         return Task.CompletedTask;
+    }
+
+    private async Task StartConsumerAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            logger.LogInformation("Starting RabbitMQ connection on a background thread");
+
+            var connection = GetOrCreateConnection();
+
+            if (!connection.IsOpen)
+            {
+                logger.LogWarning("RabbitMQ connection is not open. Consumer will not start.");
+                return;
+            }
+
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
+            _consumerChannel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
+
+            _consumerChannel.CallbackExceptionAsync += (sender, ea) =>
+            {
+                logger.LogWarning(ea.Exception, "Error with RabbitMQ consumer channel");
+                return Task.CompletedTask;
+            };
+
+            await _consumerChannel.ExchangeDeclareAsync(exchange: ExchangeName, type: ExchangeType.Direct, cancellationToken: cancellationToken);
+
+            await _consumerChannel.QueueDeclareAsync(
+                queue: _queueName,
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null,
+                cancellationToken: cancellationToken);
+
+            var consumer = new AsyncEventingBasicConsumer(_consumerChannel);
+            consumer.ReceivedAsync += OnMessageReceived;
+
+            await _consumerChannel.BasicConsumeAsync(
+                queue: _queueName,
+                autoAck: false,
+                consumer: consumer,
+                cancellationToken: cancellationToken);
+
+            foreach (var (eventName, _) in _subscriptionInfo.EventTypes)
+            {
+                await _consumerChannel.QueueBindAsync(
+                    queue: _queueName,
+                    exchange: ExchangeName,
+                    routingKey: eventName,
+                    cancellationToken: cancellationToken);
+            }
+
+            logger.LogInformation("RabbitMQ consumer started for queue {QueueName}", _queueName);
+        }
+        catch (OperationCanceledException)
+        {
+            logger.LogInformation("RabbitMQ consumer start was cancelled.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error starting RabbitMQ connection");
+        }
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
@@ -258,9 +264,9 @@ public sealed class EventBusRabbitMQ(
         }
 
         await using var scope = serviceProvider.CreateAsyncScope();
-        
+
         var handlers = scope.ServiceProvider.GetKeyedServices<IIntegrationEventHandler>(eventType);
-        
+
         foreach (var handler in handlers)
         {
             await handler.Handle(integrationEvent);

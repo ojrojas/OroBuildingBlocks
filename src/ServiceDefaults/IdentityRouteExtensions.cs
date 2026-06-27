@@ -4,18 +4,54 @@
 // See the LICENSE file in the project root for details.
 namespace OroBuildingBlocks.ServicesDefaults;
 
+/// <summary>
+/// Configuration options for identity-related endpoint paths and behaviour.
+/// </summary>
 public class IdentityEndpointOptions
 {
+    /// <summary>
+    /// Gets or sets the login endpoint path. Defaults to <c>/account/login</c>.
+    /// </summary>
     public string LoginPath { get; set; } = "/account/login";
+
+    /// <summary>
+    /// Gets or sets the logout endpoint path. Defaults to <c>/account/logout</c>.
+    /// </summary>
     public string LogoutPath { get; set; } = "/account/logout";
+
+    /// <summary>
+    /// Gets or sets the callback path used by the external OIDC provider. Defaults to <c>/signin-oidc</c>.
+    /// </summary>
     public string CallbackPath { get; set; } = "/signin-oidc";
+
+    /// <summary>
+    /// Gets or sets the signout callback path. Defaults to <c>/signout-callback-oidc</c>.
+    /// </summary>
     public string SignoutCallbackPath { get; set; } = "/signout-callback-oidc";
+
+    /// <summary>
+    /// Gets or sets the default redirect URI after authentication. Defaults to <c>/</c>.
+    /// </summary>
     public string DefaultRedirectUri { get; set; } = "/";
+
+    /// <summary>
+    /// When <c>true</c>, the callback endpoint performs a local cookie sign-in
+    /// when the redirect target is the same application. Defaults to <c>true</c>.
+    /// </summary>
     public bool SignInLocal { get; set; } = true;
 }
 
+/// <summary>
+/// Extension methods for mapping OpenIddict-based identity endpoints.
+/// </summary>
 public static class IdentityRouteExtensions
 {
+    /// <summary>
+    /// Maps login, logout, and callback endpoints for OpenIddict authentication.
+    /// </summary>
+    /// <param name="app">The endpoint route builder.</param>
+    /// <param name="configureOptions">An optional delegate to customise endpoint paths and behaviour.</param>
+    /// <returns>The same route builder for chaining.</returns>
     public static IEndpointRouteBuilder MapIdentityEndpoints(this IEndpointRouteBuilder app, Action<IdentityEndpointOptions>? configureOptions = null)
     {
         var options = new IdentityEndpointOptions();
@@ -25,7 +61,7 @@ public static class IdentityRouteExtensions
         {
             var properties = new AuthenticationProperties
             {
-                RedirectUri = returnUrl ?? options.DefaultRedirectUri
+                RedirectUri = ValidateLocalRedirect(returnUrl, options.DefaultRedirectUri)
             };
             if (localSignIn)
             {
@@ -58,9 +94,7 @@ public static class IdentityRouteExtensions
             if (!result.Succeeded || result.Principal == null)
                 return Results.Problem("External authentication failed.");
 
-            var redirectUri = result.Properties?.RedirectUri;
-            if (string.IsNullOrEmpty(redirectUri) || !Uri.IsWellFormedUriString(redirectUri, UriKind.RelativeOrAbsolute))
-                redirectUri = options.DefaultRedirectUri;
+            var redirectUri = ValidateLocalRedirect(result.Properties?.RedirectUri, options.DefaultRedirectUri);
 
             var doLocalSignIn = false;
             if (Uri.TryCreate(redirectUri, UriKind.RelativeOrAbsolute, out var r))
@@ -95,5 +129,27 @@ public static class IdentityRouteExtensions
         }).DisableAntiforgery();
 
         return app;
+    }
+
+    private static string ValidateLocalRedirect(string? returnUrl, string defaultRedirect)
+    {
+        if (string.IsNullOrEmpty(returnUrl))
+            return defaultRedirect;
+
+        // Only allow relative URIs to prevent open redirect attacks
+        if (Uri.TryCreate(returnUrl, UriKind.Relative, out _))
+            return returnUrl;
+
+        // Allow absolute URIs that point to the same host
+        if (Uri.TryCreate(returnUrl, UriKind.Absolute, out var absolute))
+        {
+            if (string.Equals(absolute.Host, "localhost", StringComparison.OrdinalIgnoreCase)
+                || absolute.IsLoopback)
+            {
+                return returnUrl;
+            }
+        }
+
+        return defaultRedirect;
     }
 }

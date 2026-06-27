@@ -4,10 +4,20 @@
 // See the LICENSE file in the project root for details.
 namespace OroBuildingBlocks.EventBus.Abstractions;
 
-
+/// <summary>
+/// Holds runtime subscription information including registered event types and JSON serialization options.
+/// </summary>
 public class EventBusSubscriptionInfo
 {
+    /// <summary>
+    /// Gets a dictionary that maps event type names to their CLR types.
+    /// </summary>
     public Dictionary<string, Type> EventTypes { get; } = new Dictionary<string, Type>();
+
+    /// <summary>
+    /// Gets the JSON serializer options used for deserializing incoming events.
+    /// Defaults to camelCase naming, ignoring nulls, and supporting all Unicode ranges.
+    /// </summary>
     public JsonSerializerOptions JsonSerializerOptions { get; } = new JsonSerializerOptions
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

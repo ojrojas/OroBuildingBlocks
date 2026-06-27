@@ -11,5 +11,7 @@
     <Project Path="src/Loggers/Loggers.csproj" />
     <Project Path="src/ServiceDefaults/ServiceDefaults.csproj" />
   </Folder>
- 
+  <Folder Name="/tests/">
+    <Project Path="tests/OroBuildingBlocks.Tests/OroBuildingBlocks.Tests.csproj" />
+  </Folder>
 </Solution>

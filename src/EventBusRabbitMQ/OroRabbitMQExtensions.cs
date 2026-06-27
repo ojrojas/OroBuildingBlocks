@@ -4,6 +4,9 @@
 // See the LICENSE file in the project root for details.
 namespace OroBuildingBlocks.EventBusRabbitMQ;
 
+/// <summary>
+/// Extension methods for registering the RabbitMQ-backed event bus with the application's DI container.
+/// </summary>
 public static class OroRabbitMQExtensions
 {
     // {
@@ -15,6 +18,12 @@ public static class OroRabbitMQExtensions
 
     private const string SectionName = "EventBus";
 
+    /// <summary>
+    /// Registers the RabbitMQ event bus implementation (<see cref="EventBusRabbitMQ"/>) and related services.
+    /// </summary>
+    /// <param name="builder">The host application builder.</param>
+    /// <param name="connectionName">The connection name used to resolve the RabbitMQ connection string from configuration.</param>
+    /// <returns>An <see cref="IEventBusBuilder"/> for further configuration.</returns>
     public static IEventBusBuilder AddRabbitMqEventBus(this IHostApplicationBuilder builder, string connectionName)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -30,6 +39,7 @@ public static class OroRabbitMQExtensions
 
         // Options support
         builder.Services.Configure<EventBusOptions>(builder.Configuration.GetSection(SectionName));
+        builder.Services.AddSingleton<IValidateOptions<EventBusOptions>, EventBusOptionsValidator>();
 
         // Abstractions on top of the core client API
         builder.Services.AddSingleton<EventBusRabbitMQLogger>();
