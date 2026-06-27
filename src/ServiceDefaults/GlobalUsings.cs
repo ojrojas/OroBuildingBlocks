@@ -19,7 +19,6 @@ global using Microsoft.AspNetCore.Authentication.Cookies;
 global using Microsoft.AspNetCore.Http;
 global using Microsoft.AspNetCore.Routing;
 global using OpenIddict.Client.AspNetCore;
-global using System.Reflection;
 global using Microsoft.AspNetCore.DataProtection;
 global using System.Diagnostics;
 global using Microsoft.AspNetCore.Diagnostics;

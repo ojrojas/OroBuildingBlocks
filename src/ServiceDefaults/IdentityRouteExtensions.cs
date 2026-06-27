@@ -92,7 +92,9 @@ public static class IdentityRouteExtensions
         {
             var result = await context.AuthenticateAsync(OpenIddictClientAspNetCoreDefaults.AuthenticationScheme);
             if (!result.Succeeded || result.Principal == null)
+            {
                 return Results.Problem("External authentication failed.");
+            }
 
             var redirectUri = ValidateLocalRedirect(result.Properties?.RedirectUri, options.DefaultRedirectUri);
 
@@ -114,7 +116,9 @@ public static class IdentityRouteExtensions
 
                 var principal = result.Principal;
                 if (principal is null)
+                {
                     return Results.Redirect(redirectUri);
+                }
 
                 var currentSub = context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var incomingSub = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -134,11 +138,15 @@ public static class IdentityRouteExtensions
     private static string ValidateLocalRedirect(string? returnUrl, string defaultRedirect)
     {
         if (string.IsNullOrEmpty(returnUrl))
+        {
             return defaultRedirect;
+        }
 
         // Only allow relative URIs to prevent open redirect attacks
         if (Uri.TryCreate(returnUrl, UriKind.Relative, out _))
+        {
             return returnUrl;
+        }
 
         // Allow absolute URIs that point to the same host
         if (Uri.TryCreate(returnUrl, UriKind.Absolute, out var absolute))

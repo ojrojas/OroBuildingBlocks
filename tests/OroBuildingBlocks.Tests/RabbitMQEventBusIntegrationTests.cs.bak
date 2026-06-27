@@ -2,66 +2,33 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using OroBuildingBlocks.EventBus.Abstractions;
 using OroBuildingBlocks.EventBus.Events;
 using OroBuildingBlocks.EventBus.Extensions;
 using OroBuildingBlocks.EventBusRabbitMQ;
-using DotNet.Testcontainers.Builders;
 using Testcontainers.RabbitMq;
 
 namespace OroBuildingBlocks.Tests;
 
 public sealed class RabbitMQEventBusIntegrationTests : IAsyncLifetime
 {
-    private readonly RabbitMqContainer? _container;
-    private readonly bool _dockerAvailable;
+    private readonly RabbitMqContainer _container = new RabbitMqBuilder()
+        .WithImage("rabbitmq:3.13-management")
+        .WithPortBinding(5672, true)
+        .Build();
 
-    public RabbitMQEventBusIntegrationTests()
-    {
-        try
-        {
-            _container = new RabbitMqBuilder()
-                .WithImage("rabbitmq:3.13-management")
-                .WithPortBinding(5672, true)
-                .Build();
-            _dockerAvailable = true;
-        }
-        catch (DockerUnavailableException)
-        {
-            _dockerAvailable = false;
-        }
-    }
+    public async Task InitializeAsync() => await _container.StartAsync();
 
-    public async Task InitializeAsync()
-    {
-        if (!_dockerAvailable)
-        {
-            return;
-        }
-
-        await _container!.StartAsync();
-    }
-
-    public async Task DisposeAsync()
-    {
-        if (_container is not null)
-        {
-            await _container.DisposeAsync();
-        }
-    }
+    public async Task DisposeAsync() => await _container.DisposeAsync();
 
     [Fact]
     public async Task PublishEvent_ConsumerReceivesIt()
     {
-        if (!_dockerAvailable)
-        {
-            return;
-        }
-
         var received = new TaskCompletionSource<TestEvent>(TaskCreationOptions.RunContinuationsAsynchronously);
         var handler = new TestHandler(e => received.TrySetResult(e));
 
-        var host = CreateHost(handler, _container!.GetConnectionString());
+        var host = CreateHost(handler, _container.GetConnectionString());
 
         await host.StartAsync();
 
@@ -79,11 +46,6 @@ public sealed class RabbitMQEventBusIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task PublishEvent_WithRetry_SucceedsAfterTransientFailure()
     {
-        if (!_dockerAvailable)
-        {
-            return;
-        }
-
         var attempts = 0;
         var received = new TaskCompletionSource<TestEvent>(TaskCreationOptions.RunContinuationsAsynchronously);
         var handler = new TestHandler(e =>
@@ -92,7 +54,7 @@ public sealed class RabbitMQEventBusIntegrationTests : IAsyncLifetime
             received.TrySetResult(e);
         });
 
-        var host = CreateHost(handler, _container!.GetConnectionString());
+        var host = CreateHost(handler, _container.GetConnectionString());
 
         await host.StartAsync();
 
@@ -147,7 +109,7 @@ public sealed class RabbitMQEventBusIntegrationTests : IAsyncLifetime
 
         public TestHandler(Action<TestEvent> onHandle) => _onHandle = onHandle;
 
-        public Task Handle(TestEvent integrationEvent)
+        public Task Handle(TestEvent integrationEvent, CancellationToken cancellationToken = default)
         {
             _onHandle(integrationEvent);
             return Task.CompletedTask;

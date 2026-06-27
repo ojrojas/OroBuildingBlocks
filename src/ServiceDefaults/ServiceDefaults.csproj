@@ -8,7 +8,7 @@
     <RootNamespace>OroBuildingBlocks.ServicesDefaults</RootNamespace>
 
     <!-- NuGet Package Metadata -->
-    <PackageId>OroServiceDefaults</PackageId>
+    <PackageId>OroBuildingBlocks.ServiceDefaults</PackageId>
     <Version>1.0.0</Version>
     <Authors>Oscar Rojas</Authors>
     <Company>Orojas</Company>

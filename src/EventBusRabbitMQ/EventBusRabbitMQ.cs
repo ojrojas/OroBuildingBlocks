@@ -103,12 +103,16 @@ public sealed class EventBusRabbitMQ(
     private IConnection GetOrCreateConnection()
     {
         if (_connection is { IsOpen: true })
+        {
             return _connection;
+        }
 
         lock (_connectionLock)
         {
             if (_connection is { IsOpen: true })
+            {
                 return _connection;
+            }
 
             _connection?.Dispose();
             _connection = serviceProvider.GetRequiredService<IConnection>();
@@ -137,7 +141,9 @@ public sealed class EventBusRabbitMQ(
             }
 
             if (cancellationToken.IsCancellationRequested)
+            {
                 return;
+            }
 
             _consumerChannel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
 

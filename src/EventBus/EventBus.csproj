@@ -5,17 +5,18 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <!-- NuGet Package Metadata -->
-    <PackageId>OroEventBus</PackageId>
+    <PackageId>OroBuildingBlocks.EventBus</PackageId>
     <Version>1.0.0</Version>
     <Authors>Oscar Rojas</Authors>
     <Company>Orojas</Company>
-    <Description>A lightweight and extensible OroEventBus library for .NET applications.</Description>
+    <Description>A lightweight and extensible EventBus library for .NET applications.</Description>
     <PackageTags>Events;Command;Notification;.NET</PackageTags>
     <RepositoryUrl>https://github.com/ojrojas/OroBuildingBlocks</RepositoryUrl>
     <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/ojrojas/OroBuildingBlocks</PackageProjectUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
