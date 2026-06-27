@@ -147,7 +147,7 @@ public sealed class RabbitMQEventBusIntegrationTests : IAsyncLifetime
 
         public TestHandler(Action<TestEvent> onHandle) => _onHandle = onHandle;
 
-        public Task Handle(TestEvent integrationEvent)
+        public Task Handle(TestEvent integrationEvent, CancellationToken cancellationToken= default)
         {
             _onHandle(integrationEvent);
             return Task.CompletedTask;

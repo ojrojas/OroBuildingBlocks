@@ -25,6 +25,7 @@
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.16.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.16.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.1" />
+    <PackageVersion Include="OroBuildingBlocks.EventBus" Version="1.0.0" />
     <PackageVersion Include="OroEventBus" Version="1.0.0" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.16.6" />
     <PackageVersion Include="Seq.Extensions.Logging" Version="9.0.0" />
