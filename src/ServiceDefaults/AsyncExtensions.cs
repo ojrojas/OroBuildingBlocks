@@ -25,7 +25,7 @@ public static class AsyncExtensions
         {
             var list = new List<T>();
 
-            await foreach (var i in source)
+            await foreach (T? i in source)
             {
                 list.Add(i);
             }

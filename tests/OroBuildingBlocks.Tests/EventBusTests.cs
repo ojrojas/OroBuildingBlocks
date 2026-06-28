@@ -15,7 +15,7 @@ public class EventBusTests
     public void IntegrationEvent_ParameterizedConstructor_SetsIdAndCreated()
     {
         var id = Guid.NewGuid();
-        var created = DateTime.UtcNow;
+        DateTime created = DateTime.UtcNow;
         var @event = new TestIntegrationEvent(id, created);
 
         Assert.Equal(id, @event.Id);

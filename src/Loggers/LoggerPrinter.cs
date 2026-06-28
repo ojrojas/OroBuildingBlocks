@@ -2,6 +2,8 @@
 // Copyright (C) 2026 Oscar Rojas
 // Licensed under the GNU AGPL v3.0 or later.
 // See the LICENSE file in the project root for details.
+using Serilog.Core;
+
 namespace OroBuildingBlocks.Loggers;
 
 /// <summary>
@@ -19,7 +21,7 @@ public static class LoggerPrinter
     public static Serilog.ILogger CreateSerilogLogger(string key, string value, IConfiguration configuration)
     {
         var seqEndpoint = configuration["ConnectionStrings:Seq"];
-        var loggerBuilding = new LoggerConfiguration()
+        LoggerConfiguration loggerBuilding = new LoggerConfiguration()
               .MinimumLevel.Verbose()
               .Enrich.WithProperty(key, value)
               .Enrich.FromLogContext()
@@ -30,7 +32,7 @@ public static class LoggerPrinter
             loggerBuilding.WriteTo.Seq(seqEndpoint);
         }
 
-        var logger = loggerBuilding.CreateLogger();
+        Logger logger = loggerBuilding.CreateLogger();
 
         Serilog.Debugging.SelfLog.Enable(Console.Error);
 

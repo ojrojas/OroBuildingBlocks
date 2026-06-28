@@ -4,8 +4,6 @@
 // See the LICENSE file in the project root for details.
 namespace OroBuildingBlocks.EventBusRabbitMQ;
 
-using Microsoft.Extensions.Options;
-
 /// <summary>
 /// Configuration options for the RabbitMQ event bus implementation.
 /// </summary>

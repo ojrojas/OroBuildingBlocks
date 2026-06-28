@@ -90,7 +90,7 @@ public static class IdentityRouteExtensions
 
         app.MapMethods(options.CallbackPath, new[] { HttpMethods.Get, HttpMethods.Post }, async (HttpContext context) =>
         {
-            var result = await context.AuthenticateAsync(OpenIddictClientAspNetCoreDefaults.AuthenticationScheme);
+            AuthenticateResult result = await context.AuthenticateAsync(OpenIddictClientAspNetCoreDefaults.AuthenticationScheme);
             if (!result.Succeeded || result.Principal == null)
             {
                 return Results.Problem("External authentication failed.");
@@ -99,7 +99,7 @@ public static class IdentityRouteExtensions
             var redirectUri = ValidateLocalRedirect(result.Properties?.RedirectUri, options.DefaultRedirectUri);
 
             var doLocalSignIn = false;
-            if (Uri.TryCreate(redirectUri, UriKind.RelativeOrAbsolute, out var r))
+            if (Uri.TryCreate(redirectUri, UriKind.RelativeOrAbsolute, out Uri? r))
             {
                 doLocalSignIn = !r.IsAbsoluteUri
                     || (string.Equals(r.Host, context.Request.Host.Host, StringComparison.OrdinalIgnoreCase)
@@ -114,7 +114,7 @@ public static class IdentityRouteExtensions
                     shouldLocalSignIn = b;
                 }
 
-                var principal = result.Principal;
+                ClaimsPrincipal? principal = result.Principal;
                 if (principal is null)
                 {
                     return Results.Redirect(redirectUri);
@@ -149,7 +149,7 @@ public static class IdentityRouteExtensions
         }
 
         // Allow absolute URIs that point to the same host
-        if (Uri.TryCreate(returnUrl, UriKind.Absolute, out var absolute))
+        if (Uri.TryCreate(returnUrl, UriKind.Absolute, out Uri? absolute))
         {
             if (string.Equals(absolute.Host, "localhost", StringComparison.OrdinalIgnoreCase)
                 || absolute.IsLoopback)

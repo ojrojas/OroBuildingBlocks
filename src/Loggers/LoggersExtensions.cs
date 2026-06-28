@@ -17,7 +17,7 @@ public static class LoggersExtensions
     public static void AddServicesWritersLogger(
         this IHostApplicationBuilder builder, IConfiguration configuration)
     {
-        var seqConfig = configuration.GetSection("Seq");
+        IConfigurationSection seqConfig = configuration.GetSection("Seq");
 
         if (builder.Environment.IsDevelopment())
         {

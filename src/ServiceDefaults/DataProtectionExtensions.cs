@@ -23,8 +23,8 @@ public static class DataProtectionExtensions
 
         var applicationName = configuration["DataProtection:ApplicationName"] ?? "OroIdentityShared";
 
-        var dpBuilder = services.AddDataProtection().SetApplicationName(applicationName);
-        var logger = loggerFactory?.CreateLogger("DataProtectionExtensions");
+        IDataProtectionBuilder dpBuilder = services.AddDataProtection().SetApplicationName(applicationName);
+        ILogger? logger = loggerFactory?.CreateLogger("DataProtectionExtensions");
         logger?.LogInformation("Configuring Data Protection with application name: {AppName}", applicationName);
 
         PersistToFile(dpBuilder, environment, logger);

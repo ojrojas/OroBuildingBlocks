@@ -61,16 +61,16 @@ public sealed class RabbitMQEventBusIntegrationTests : IAsyncLifetime
         var received = new TaskCompletionSource<TestEvent>(TaskCreationOptions.RunContinuationsAsynchronously);
         var handler = new TestHandler(e => received.TrySetResult(e));
 
-        var host = CreateHost(handler, _container!.GetConnectionString());
+        IHost host = CreateHost(handler, _container!.GetConnectionString());
 
         await host.StartAsync();
 
-        var eventBus = host.Services.GetRequiredService<IEventBus>();
+        IEventBus eventBus = host.Services.GetRequiredService<IEventBus>();
         var testEvent = new TestEvent { Data = "hello" };
 
         await eventBus.PublishAsync(testEvent);
 
-        var delivered = await received.Task.WaitAsync(TimeSpan.FromSeconds(15));
+        TestEvent delivered = await received.Task.WaitAsync(TimeSpan.FromSeconds(15));
         Assert.Equal(testEvent.Data, delivered.Data);
 
         await host.StopAsync();
@@ -92,16 +92,16 @@ public sealed class RabbitMQEventBusIntegrationTests : IAsyncLifetime
             received.TrySetResult(e);
         });
 
-        var host = CreateHost(handler, _container!.GetConnectionString());
+        IHost host = CreateHost(handler, _container!.GetConnectionString());
 
         await host.StartAsync();
 
-        var eventBus = host.Services.GetRequiredService<IEventBus>();
+        IEventBus eventBus = host.Services.GetRequiredService<IEventBus>();
         var testEvent = new TestEvent { Data = "retry-test" };
 
         await eventBus.PublishAsync(testEvent);
 
-        var delivered = await received.Task.WaitAsync(TimeSpan.FromSeconds(15));
+        TestEvent delivered = await received.Task.WaitAsync(TimeSpan.FromSeconds(15));
         Assert.Equal(testEvent.Data, delivered.Data);
         Assert.True(attempts >= 1);
 

@@ -2,7 +2,7 @@ using OroBuildingBlocks.EventBus.Extensions;
 using OroBuildingBlocks.EventBusRabbitMQ;
 using WebApiExample1.IntegrateEvents;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 
 ConfigurationManager configuration = builder.Configuration;
@@ -14,7 +14,7 @@ builder.Services.AddOpenApi();
    builder.AddRabbitMqEventBus("oroeventdrivenexchange")
                .AddSubscriptionManager<ExampleIntegrateEvents, ExampleIntegrateEventsHandler>();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

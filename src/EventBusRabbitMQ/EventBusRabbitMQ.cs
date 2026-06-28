@@ -29,9 +29,9 @@ public sealed class EventBusRabbitMQ(
             logger.LogInformation("Publishing event to RabbitMQ: {EventId} ({EventName})", integrationEvent.Id, eventName);
         }
 
-        var connection = GetOrCreateConnection();
+        IConnection connection = GetOrCreateConnection();
 
-        using var channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
+        using IChannel channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
 
         await channel.ExchangeDeclareAsync(exchange: ExchangeName, type: ExchangeType.Direct, cancellationToken: cancellationToken);
 
@@ -40,7 +40,7 @@ public sealed class EventBusRabbitMQ(
 
         await _resiliencePipeline.ExecuteAsync(async ct =>
         {
-            using var activity = telemetry.ActivitySource.StartActivity(activityName, ActivityKind.Producer);
+            using Activity? activity = telemetry.ActivitySource.StartActivity(activityName, ActivityKind.Producer);
 
             var properties = new BasicProperties
             {
@@ -71,7 +71,7 @@ public sealed class EventBusRabbitMQ(
 
     private void InjectTelemetryContext(Activity? activity, BasicProperties properties)
     {
-        var contextToInject = activity?.Context ?? Activity.Current?.Context ?? default;
+        ActivityContext contextToInject = activity?.Context ?? Activity.Current?.Context ?? default;
 
         telemetry.Propagator.Inject(new PropagationContext(contextToInject, Baggage.Current),
             properties,
@@ -132,7 +132,7 @@ public sealed class EventBusRabbitMQ(
         {
             logger.LogInformation("Starting RabbitMQ connection on a background thread");
 
-            var connection = GetOrCreateConnection();
+            IConnection connection = GetOrCreateConnection();
 
             if (!connection.IsOpen)
             {
@@ -172,7 +172,7 @@ public sealed class EventBusRabbitMQ(
                 consumer: consumer,
                 cancellationToken: cancellationToken);
 
-            foreach (var (eventName, _) in _subscriptionInfo.EventTypes)
+            foreach ((string? eventName, Type _) in _subscriptionInfo.EventTypes)
             {
                 await _consumerChannel.QueueBindAsync(
                     queue: _queueName,
@@ -197,7 +197,7 @@ public sealed class EventBusRabbitMQ(
 
     private async Task OnMessageReceived(object sender, BasicDeliverEventArgs eventArgs)
     {
-        var parentContext = telemetry.Propagator.Extract(default, eventArgs.BasicProperties, (props, key) =>
+        PropagationContext parentContext = telemetry.Propagator.Extract(default, eventArgs.BasicProperties, (props, key) =>
         {
             if (props.Headers?.TryGetValue(key, out var value) == true && value is byte[] bytes)
             {
@@ -209,7 +209,7 @@ public sealed class EventBusRabbitMQ(
         Baggage.Current = parentContext.Baggage;
 
         var activityName = $"{eventArgs.RoutingKey} receive";
-        using var activity = telemetry.ActivitySource.StartActivity(activityName, ActivityKind.Client, parentContext.ActivityContext);
+        using Activity? activity = telemetry.ActivitySource.StartActivity(activityName, ActivityKind.Client, parentContext.ActivityContext);
 
         SetActivityTags(activity, eventArgs.RoutingKey, "receive");
 
@@ -257,23 +257,23 @@ public sealed class EventBusRabbitMQ(
             logger.LogTrace("Processing RabbitMQ event: {EventName}", eventName);
         }
 
-        if (!_subscriptionInfo.EventTypes.TryGetValue(eventName, out var eventType))
+        if (!_subscriptionInfo.EventTypes.TryGetValue(eventName, out Type? eventType))
         {
             logger.LogWarning("Unable to resolve event type for event name {EventName}", eventName);
             return;
         }
 
-        var integrationEvent = DeserializeMessage(message, eventType);
+        IntegrationEvent? integrationEvent = DeserializeMessage(message, eventType);
         if (integrationEvent == null)
         {
             return;
         }
 
-        await using var scope = serviceProvider.CreateAsyncScope();
+        await using AsyncServiceScope scope = serviceProvider.CreateAsyncScope();
 
-        var handlers = scope.ServiceProvider.GetKeyedServices<IIntegrationEventHandler>(eventType);
+        IEnumerable<IIntegrationEventHandler> handlers = scope.ServiceProvider.GetKeyedServices<IIntegrationEventHandler>(eventType);
 
-        foreach (var handler in handlers)
+        foreach (IIntegrationEventHandler handler in handlers)
         {
             await handler.Handle(integrationEvent);
         }
