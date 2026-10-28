@@ -1,44 +1,110 @@
 <Project>
   <PropertyGroup>
-    <!-- Enable central package management,
-    https://learn.microsoft.com/en-us/nuget/consume-packages/Central-Package-Management -->
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <NoWarn>$(NoWarn);NU1507</NoWarn>
+    <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="13.4.6" />
-    <PackageVersion Include="Aspire.RabbitMQ.Client" Version="13.4.6" />
-    <PackageVersion Include="Aspire.Seq" Version="13.4.6" />
-    <PackageVersion Include="Microsoft.AspNetCore.App" Version="2.2.8" />
-    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.6" />
-    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.7.0" />
-    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.9" />
-    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.7.0" />
-    <PackageVersion Include="OpenIddict.Abstractions" Version="7.5.0" />
-    <PackageVersion Include="OpenIddict.Client.AspNetCore" Version="7.5.0" />
-    <PackageVersion Include="OpenIddict.Validation.AspNetCore" Version="7.5.0" />
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.16.0" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.16.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.16.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.16.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.1" />
-    <PackageVersion Include="OroBuildingBlocks.EventBus" Version="1.0.0" />
-    <PackageVersion Include="OroEventBus" Version="1.0.0" />
-    <PackageVersion Include="Scalar.AspNetCore" Version="2.16.6" />
-    <PackageVersion Include="Seq.Extensions.Logging" Version="9.0.0" />
-    <PackageVersion Include="Serilog" Version="4.3.1" />
-    <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
-    <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
+    <!-- Aspire hosting integrations (AppHost only, pinned to AppHost SDK 13.5.4) -->
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.6.4" />
+    <PackageVersion Include="Aspire.Hosting.Redis" Version="13.6.4" />
+    <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="13.6.4" />
+    <PackageVersion Include="Aspire.Hosting.Seq" Version="13.6.4" />
+    <!-- Aspire integration testing (Aspire.Hosting.Testing, pinned to AppHost SDK 13.5.3) -->
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.5.4" />
+    <!-- ClosedXML for .xlsx report exports (SPEC-020 T006: sole justified new package, MIT) -->
+    <PackageVersion Include="ClosedXML" Version="0.105.1" />
+    <!-- NOTE: Aspire.Hosting.AppHost version comes implicitly from
+         <Sdk Name="Aspire.AppHost.Sdk" Version="13.5.3" /> and MUST NOT be
+         pinned here (NU1009 under Central Package Management). -->
+    <!-- EF Core Npgsql provider (SPEC-001 T002: aligned with EF Core 10.0.9) -->
+    <PackageVersion Include="CommunityToolkit.Aspire.Hosting.Floci" Version="13.5.1-beta.757" />
+    <PackageVersion Include="CommunityToolkit.Aspire.Hosting.Ollama" Version="13.6.1-beta.938" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.13" />
+    <!-- Architecture tests (SPEC-001 T002: NetArchTest.Rules, reflection fallback if incompatible) -->
+    <PackageVersion Include="NetArchTest.Rules" Version="1.3.2" />
+    <!-- Integration tests over HTTP (SPEC-001 T022: WebApplicationFactory) -->
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.12" />
+    <!-- Microsoft.Extensions -->
+    <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.11.0" />
+    <!-- SPEC-031 T008 BFF: AddHttpClient in the WASM client (CPM-pinned). -->
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.12" />
+    <!-- EF Core -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.13" />
+    <!-- Auth externa (T03: JwtBearer para tokens OIDC de OroIdentityServer) -->
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
+    <!-- Development-only encrypted local secret store for SPEC-100. -->
+    <PackageVersion Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="10.0.12" />
+    <!-- T13 BFF: code+PKCE contra OroIdentityServer (igual que T03: no viene en el shared framework) -->
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.13" />
+    <!-- SPEC-031 T005 BFF: YARP forwarder /api/* con Bearer server-side (MIT) -->
+    <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
+    <PackageVersion Include="Serilog" Version="4.4.0" />
+    <PackageVersion Include="Serilog.Enrichers.Environment" Version="3.0.1" />
+    <PackageVersion Include="Serilog.Enrichers.Process" Version="3.0.0" />
+    <PackageVersion Include="Serilog.Enrichers.Thread" Version="4.0.0" />
+    <PackageVersion Include="Serilog.Extensions.Hosting" Version="10.0.0" />
+    <PackageVersion Include="Serilog.Settings.Configuration" Version="10.0.1" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
+    <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageVersion Include="Serilog.Sinks.Grafana.Loki" Version="9.0.2" />
     <PackageVersion Include="Serilog.Sinks.Seq" Version="9.1.0" />
-    <PackageVersion Include="coverlet.collector" Version="10.0.1" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
+    <!-- Blazor (examples) -->
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="10.0.13" Condition="'$(TargetFramework)' == 'net10.0'" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="11.0.0-rc.1.26425.128" Condition="'$(TargetFramework)' == 'net11.0'" />
+    <!-- SPEC-031 T006 BFF: client-side auth state (CPM-pinned, framework-aligned). -->
+    <PackageVersion Include="Microsoft.AspNetCore.Components.Authorization" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.12" />
+    <!-- T13 REDO: par de AddAuthenticationStateSerialization del server (client Program.cs). -->
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="10.0.12" />
+    <!-- SPEC-006 cross-session fix: single Server pin (was duplicated 10.0.12 + 10.0.9). -->
+    <!-- OpenIddict (examples) -->
+    <PackageVersion Include="OpenIddict.AspNetCore" Version="7.7.1" />
+    <PackageVersion Include="OpenIddict.EntityFrameworkCore" Version="7.7.1" />
+    <!-- SPEC-100: validate encrypted OroIdentityServer access tokens through the provider's introspection endpoint. -->
+    <PackageVersion Include="OpenIddict.Validation.AspNetCore" Version="7.7.2" />
+    <PackageVersion Include="OpenIddict.Validation.SystemNetHttp" Version="7.7.2" />
+    <!-- BFF (EduCoreSIS pattern): OpenIddict confidential client for cookie login/logout round-trips. -->
+    <PackageVersion Include="OpenIddict.Client.AspNetCore" Version="7.7.1" />
+    <PackageVersion Include="OpenIddict.Client.SystemNetHttp" Version="7.7.1" />
+    <!-- RabbitMQ -->
+    <PackageVersion Include="RabbitMQ.Client" Version="7.2.2" />
+    <!-- SPEC-000 G6: explicit-SQL PostgreSQL persistence and migration journal. -->
+    <PackageVersion Include="Dapper" Version="2.1.89" />
+    <PackageVersion Include="Npgsql" Version="10.0.3" />
+    <PackageVersion Include="dbup-postgresql" Version="7.0.1" />
+    <PackageVersion Include="StackExchange.Redis" Version="2.13.1" />
+    <!-- OpenTelemetry -->
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.20.1" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.20.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.20.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.20.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.20.1" />
+    <!-- Official C# MCP client SDK; remote Streamable HTTP tools. -->
+    <PackageVersion Include="ModelContextProtocol.Core" Version="2.3.0" />
+    <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="2.3.0" />
+    <!-- Test packages (T16 slice suite: xUnit + Moq + coverlet vía CPM) -->
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageVersion Include="coverlet.collector" Version="10.1.0" />
+    <PackageVersion Include="Moq" Version="4.21.0" />
+    <PackageVersion Include="NSubstitute" Version="6.2.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.14" />
     <PackageVersion Include="xunit" Version="2.9.3" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
-    <PackageVersion Include="Testcontainers.RabbitMq" Version="4.12.0" />
-    <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.0.7" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
+    <PackageVersion Include="bunit" Version="2.12.5" />
   </ItemGroup>
 </Project>

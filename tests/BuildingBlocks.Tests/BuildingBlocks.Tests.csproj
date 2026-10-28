@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BuildingBlocks.CQRS\BuildingBlocks.CQRS.csproj" />
+    <ProjectReference Include="..\..\src\BuildingBlocks.EventBus.RabbitMQ\BuildingBlocks.EventBus.RabbitMQ.csproj" />
+    <ProjectReference Include="..\..\src\BuildingBlocks.EventBus\BuildingBlocks.EventBus.csproj" />
+    <ProjectReference Include="..\..\src\BuildingBlocks.Kernel.Domain\BuildingBlocks.Kernel.Domain.csproj" />
+    <ProjectReference Include="..\..\src\BuildingBlocks.Kernel.Infrastructure\BuildingBlocks.Kernel.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\BuildingBlocks.Logger\BuildingBlocks.Logger.csproj" />
+    <ProjectReference Include="..\..\src\BuildingBlocks.ServiceDefaults\BuildingBlocks.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>

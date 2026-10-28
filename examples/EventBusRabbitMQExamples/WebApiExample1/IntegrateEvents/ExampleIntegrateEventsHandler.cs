@@ -1,11 +1,11 @@
-using OroBuildingBlocks.EventBus.Abstractions;
+using BuildingBlocks.EventBus.Abstractions;
 
 namespace WebApiExample1.IntegrateEvents;
 
 public class ExampleIntegrateEventsHandler(ILogger<ExampleIntegrateEventsHandler> logger)
 : IIntegrationEventHandler<ExampleIntegrateEvents>
 {
-    public async Task Handle(
+    public async Task HandleAsync(
         ExampleIntegrateEvents integrationEvent,
         CancellationToken cancellationToken = default)
     {

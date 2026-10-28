@@ -6,12 +6,15 @@
     <Project Path="examples/EventBusRabbitMQExamples/WebApiExample2/WebApiExample2.csproj" />
   </Folder>
   <Folder Name="/src/">
-    <Project Path="src/EventBus/EventBus.csproj" />
-    <Project Path="src/EventBusRabbitMQ/EventBusRabbitMQ.csproj" />
-    <Project Path="src/Loggers/Loggers.csproj" />
-    <Project Path="src/ServiceDefaults/ServiceDefaults.csproj" />
+    <Project Path="src/BuildingBlocks.CQRS/BuildingBlocks.CQRS.csproj" />
+    <Project Path="src/BuildingBlocks.EventBus.RabbitMQ/BuildingBlocks.EventBus.RabbitMQ.csproj" />
+    <Project Path="src/BuildingBlocks.EventBus/BuildingBlocks.EventBus.csproj" />
+    <Project Path="src/BuildingBlocks.Kernel.Domain/BuildingBlocks.Kernel.Domain.csproj" />
+    <Project Path="src/BuildingBlocks.Kernel.Infrastructure/BuildingBlocks.Kernel.Infrastructure.csproj" />
+    <Project Path="src/BuildingBlocks.Logger/BuildingBlocks.Logger.csproj" />
+    <Project Path="src/BuildingBlocks.ServiceDefaults/BuildingBlocks.ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/OroBuildingBlocks.Tests/OroBuildingBlocks.Tests.csproj" />
+    <Project Path="tests/BuildingBlocks.Tests/BuildingBlocks.Tests.csproj" />
   </Folder>
 </Solution>

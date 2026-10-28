@@ -1,5 +1,4 @@
-using OroBuildingBlocks.EventBus.Extensions;
-using OroBuildingBlocks.EventBusRabbitMQ;
+using BuildingBlocks.EventBus.RabbitMQ.DependencyInjection;
 using WebApiExample1.IntegrateEvents;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -11,8 +10,11 @@ ConfigurationManager configuration = builder.Configuration;
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-   builder.AddRabbitMqEventBus("oroeventdrivenexchange")
-               .AddSubscriptionManager<ExampleIntegrateEvents, ExampleIntegrateEventsHandler>();
+builder.Services.AddRabbitMqEventBus(builder.Configuration, options =>
+{
+    options.ExchangeName = "oroeventdrivenexchange";
+    options.QueueName = "webapi1-queue";
+}).AddSubscription<ExampleIntegrateEvents, ExampleIntegrateEventsHandler>();
 
 WebApplication app = builder.Build();
 
